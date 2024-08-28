@@ -1,4 +1,4 @@
-package main
+package types
 
 type DecodedFunction struct {
 	ABIName           string // Function Decoding Result
