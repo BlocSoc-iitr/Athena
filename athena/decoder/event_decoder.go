@@ -1,6 +1,10 @@
 package decoder
 
-import "starknet-athena/athena/types"
+import (
+	"encoding/binary"
+	"fmt"
+	"starknet-athena/athena/types"
+)
 
 type CairoEventDecoder struct {
 	types.AbiEvent
@@ -31,32 +35,76 @@ func NewCairoEventDecoder(
 	}
 }
 
-func (d *CairoEventDecoder) Decode(data [][]byte, keys [][]byte) (*types.DecodedEvent, error) {
+// func (d *CairoEventDecoder) Decode(data [][]byte, keys [][]byte) (*types.DecodedEvent, error) {
+// 	decodedData := make(map[string]interface{})
+// 	for paramName, starknetType := range d.AbiEvent.Data {
+// 		decodedValue, err := starknetType.Decode(data[0])
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		decodedData[paramName] = decodedValue
+// 		data = data[1:]
+// 	}
+
+//	for paramName, starknetType := range d.AbiEvent.Keys {
+//		decodedValue, err := starknetType.Decode(keys[0])
+//		if err != nil {
+//			return nil, err
+//		}
+//		decodedData[paramName] = decodedValue
+//		keys = keys[1:]
+//	}
+func (e *CairoEventDecoder) Decode(data [][]byte, keys [][]byte) (types.DecodedEvent, error) {
+	_data := make([]int, len(data))
+	for i, d := range data {
+		if len(d) > 8 {
+			return types.DecodedEvent{}, fmt.Errorf("Invalid data length at index %d", i)
+		}
+
+		_data[i] = int(int64(binary.BigEndian.Uint64(append(make([]byte, 8-len(d)), d...))))
+	}
+
+	_keys := make([]int, len(keys)-1)
+	for i := 1; i < len(keys); i++ {
+		if len(keys[i]) > 8 {
+			return types.DecodedEvent{}, fmt.Errorf("Invalid key length at index %d", i)
+		}
+
+		_keys[i-1] = int(int64(binary.BigEndian.Uint64(append(make([]byte, 8-len(keys[i])), keys[i]...))))
+	}
+
 	decodedData := make(map[string]interface{})
-	for paramName, starknetType := range d.AbiEvent.Data {
-		decodedValue, err := starknetType.Decode(data[0])
-		if err != nil {
-			return nil, err
+
+	for _, param := range e.Parameters {
+		var value interface{}
+		var err error
+
+		if _, ok := e.Data[param]; ok {
+			// Decode from data
+			value, err = types.DecodeFromTypes([]types.StarknetType{e.Data[param]}, &_data)
+		} else if _, ok := e.Keys[param]; ok {
+			// Decode from keys
+			value, err = types.DecodeFromTypes([]types.StarknetType{e.Keys[param]}, &_keys)
+		} else {
+			return types.DecodedEvent{}, fmt.Errorf("event Parameter %s not present in Keys or Data for Event %s", param, e.Name)
 		}
-		decodedData[paramName] = decodedValue
-		data = data[1:]
+
+		if err != nil {
+			return types.DecodedEvent{}, err
+		}
+		decodedData[param] = value
 	}
 
-	for paramName, starknetType := range d.AbiEvent.Keys {
-		decodedValue, err := starknetType.Decode(keys[0])
-		if err != nil {
-			return nil, err
-		}
-		decodedData[paramName] = decodedValue
-		keys = keys[1:]
+	if len(_data) != 0 || len(_keys) != 0 {
+		return types.DecodedEvent{}, fmt.Errorf("calldata Not Completely Consumed decoding Event: %s", e.idStr())
 	}
 
-	return &types.DecodedEvent{
-		AbiName:        d.AbiName,
-		Name:           d.AbiEvent.Name,
-		EventSignature: d.idStr(),
-		Data:           decodedData,
+	return types.DecodedEvent{
+		AbiName: e.AbiName,
+		Name:    e.Name,
+		Data:    decodedData,
 	}, nil
+
 }
 
 func (d *CairoEventDecoder) idStr() string {

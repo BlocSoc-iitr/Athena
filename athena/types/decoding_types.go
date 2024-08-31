@@ -108,13 +108,13 @@ func (af *AbiFunction) IdStr() string {
 func (af *AbiFunction) Decode(calldata []int, result []int) DecodedFunction {
 	calldataCopy := make([]int, len(calldata))
 	copy(calldataCopy, calldata)
-	decodedInputs := decodeFromParams(af.Inputs, calldataCopy)
+	decodedInputs, _ := DecodeFromParams(af.Inputs, &calldataCopy)
 
 	var decodedOutputs []interface{}
 	if result != nil {
 		resultCopy := make([]int, len(result))
 		copy(resultCopy, result)
-		decodedOutputs = decodeFromTypes(af.Outputs, resultCopy)
+		decodedOutputs, _ = DecodeFromTypes(af.Outputs, &resultCopy)
 	}
 
 	return DecodedFunction{
@@ -125,28 +125,6 @@ func (af *AbiFunction) Decode(calldata []int, result []int) DecodedFunction {
 		Output:            decodedOutputs,
 	}
 
-}
-
-// Encode encodes the inputs of the function into calldata.
-func (af *AbiFunction) Encode(inputs map[string]interface{}) []int {
-	return encodeFromParams(af.Inputs, inputs)
-}
-
-func encodeFromParams(inputs []AbiParameter, params map[string]interface{}) []int {
-
-	return []int{}
-}
-
-// Helper function to decode from parameters (dummy implementation)
-func decodeFromParams(inputs []AbiParameter, calldata []int) map[string]interface{} {
-
-	return map[string]interface{}{}
-}
-
-// Helper function to decode from types (dummy implementation)
-func decodeFromTypes(types []StarknetType, result []int) []interface{} {
-
-	return []interface{}{}
 }
 
 type AbiEvent struct {
@@ -181,56 +159,50 @@ func NewAbiEvent(
 	}
 }
 
-// // IdStr returns a string representation of the ABI Event.
-// func (ae *AbiEvent) IdStr() (string, error) {
-// 	eventParams := []string{}
+func (e *AbiEvent) Decode(data []int, keys []int) (DecodedEvent, error) {
+	_data := make([]int, len(data))
+	copy(_data, data)
 
-// 	for _, param := range ae.Parameters {
-// 		if typ, ok := ae.Data[param]; ok {
-// 			eventParams = append(eventParams, fmt.Sprintf("%s:%s", param, typ.IdStr()))
-// 		} else if typ, ok := ae.Keys[param]; ok {
-// 			eventParams = append(eventParams, fmt.Sprintf("<%s>:%s", param, typ.IdStr()))
-// 		} else {
-// 			return "", fmt.Errorf("TypeDecodeError: Event Parameter %s not part of event keys or Data", param)
-// 		}
-// 	}
+	_keys := make([]int, len(keys)-1)
+	copy(_keys, keys[1:]) // Skip the first key (event signature)
 
-// 	return fmt.Sprintf("Event(%s)", strings.Join(eventParams, ",")), nil
-// }
+	decodedData := make(map[string]interface{})
 
-// Decode decodes the keys and data of an event.
-// func (ae *AbiEvent) Decode(data, keys []int) (*DecodedEvent, error) {
-// 	_data := make([]int, len(data))
-// 	copy(_data, data)
-// 	_keys := make([]int, len(keys[1:]))
-// 	copy(_keys, keys[1:])
+	for _, param := range e.Parameters {
+		var value interface{}
+		//var err error
 
-// 	decodedData := map[string]interface{}{}
+		if _, ok := e.Data[param]; ok {
+			// Decode from data
+			decoded, err := DecodeFromTypes([]StarknetType{e.Data[param]}, &_data)
+			if err != nil {
+				return DecodedEvent{}, err
+			}
+			value = decoded[0]
+		} else if _, ok := e.Keys[param]; ok {
+			// Decode from keys
+			decoded, err := DecodeFromTypes([]StarknetType{e.Keys[param]}, &_keys)
+			if err != nil {
+				return DecodedEvent{}, err
+			}
+			value = decoded[0]
+		} else {
+			return DecodedEvent{}, fmt.Errorf("event Parameter %s not present in Keys or Data for Event %s", param, e.Name)
+		}
 
-// 	for _, param := range ae.Parameters {
-// 		if typ, ok := ae.Data[param]; ok {
-// 			decodedValue, err := DecodeFromTypes([]StarknetType{typ}, _data)
-// 			if err != nil {
-// 				return nil, err
-// 			}
-// 			decodedData[param] = decodedValue[0]
-// 		} else if typ, ok := ae.Keys[param]; ok {
-// 			decodedValue, err := DecodeFromTypes([]StarknetType{typ}, _keys)
-// 			if err != nil {
-// 				return nil, err
-// 			}
-// 			decodedData[param] = decodedValue[0]
-// 		} else {
-// 			return nil, fmt.Errorf("TypeDecodeError: Event Parameter %s not present in Keys or Data for Event %s", param, ae.Name)
-// 		}
-// 	}
+		decodedData[param] = value
+	}
 
-// 	if len(_data) != 0 || len(_keys) != 0 {
-// 		return nil, fmt.Errorf("InvalidCalldataError: Calldata Not Completely Consumed decoding Event: %s", ae.IdStr())
-// 	}
+	if len(_data) != 0 || len(_keys) != 0 {
+		return DecodedEvent{}, fmt.Errorf(" calldata Not Completely Consumed decoding Event")
+	}
 
-// 	return &DecodedEvent{AbiName: ae.AbiName, Name: ae.Name, Data: decodedData}, nil
-// }
+	return DecodedEvent{
+		AbiName: *e.AbiName,
+		Name:    e.Name,
+		Data:    decodedData,
+	}, nil
+}
 
 // AbiInterface represents an ABI Interface, including a name and a list of functions.
 type AbiInterface struct {

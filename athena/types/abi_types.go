@@ -54,36 +54,6 @@ const (
 	NoneType
 )
 
-func (t StarknetCoreType) Decode(data []byte) (interface{}, error) {
-	switch t {
-	case U8:
-		if len(data) < 1 {
-			return nil, fmt.Errorf("not enough data to decode U8")
-		}
-		return uint8(data[0]), nil
-	case U16:
-		if len(data) < 2 {
-			return nil, fmt.Errorf("not enough data to decode U16")
-		}
-		return uint16(data[0])<<8 | uint16(data[1]), nil
-	case U32:
-		if len(data) < 4 {
-			return nil, fmt.Errorf("not enough data to decode U32")
-		}
-		return uint32(data[0])<<24 | uint32(data[1])<<16 | uint32(data[2])<<8 | uint32(data[3]), nil
-	case U64:
-		if len(data) < 8 {
-			return nil, fmt.Errorf("not enough data to decode U64")
-		}
-		return uint64(data[0])<<56 | uint64(data[1])<<48 | uint64(data[2])<<40 | uint64(data[3])<<32 |
-			uint64(data[4])<<24 | uint64(data[5])<<16 | uint64(data[6])<<8 | uint64(data[7]), nil
-	case Felt, ContractAddress, ClassHash, EthAddress, Bytes31:
-		return data, nil
-	default:
-		return nil, fmt.Errorf("decode not implemented for type: %s", t.String())
-	}
-}
-
 func (t StarknetCoreType) IDStr() string {
 	return t.String()
 }
@@ -147,7 +117,6 @@ func (t StarknetCoreType) MaxValue() (*big.Int, error) {
 
 type StarknetType interface {
 	IDStr() string
-	Decode(data []byte) (interface{}, error)
 }
 
 type StarknetArray struct {
@@ -169,6 +138,10 @@ func (so StarknetOption) IDStr() string {
 type StarknetEnum struct {
 	Name     string
 	Variants []Variant
+}
+
+func (se StarknetEnum) IDStr() string {
+	return fmt.Sprintf("Option[%s]")
 }
 
 // Variant represents a tuple of a variant name and type.
