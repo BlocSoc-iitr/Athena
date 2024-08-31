@@ -16,10 +16,10 @@ func Get_transactions_by_block(blockNumber *uint64) error {
 	}
 
 	blockId := rpc.BlockID{Number: blockNumber}
-	transactions, error := provider.BlockWithTxHashes(context.Background(), blockId)
+	transactions, err := provider.BlockWithTxHashes(context.Background(), blockId)
 
-	if error != nil {
-		log.Fatalf("Error fetching block data: %v", error)
+	if err != nil {
+		log.Fatalf("Error fetching block data: %v", err)
 	}
 
 	switch transactionsType := transactions.(type) {

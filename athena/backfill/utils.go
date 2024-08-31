@@ -1,5 +1,19 @@
 package backfill
 
+import(
+    "fmt"
+    "encoding/json"
+    "os"
+    "net/http"
+    "time"
+    "io"
+    "bytes"
+    "strconv"
+    "os/signal"
+    "syscall"
+    "log"
+)
+
 type GraceFullkiller struct {
 	killNow bool
 }
@@ -21,27 +35,32 @@ const(
 	pending BlockIdentifier = "pending"
 )
 
-func Default_rpc (network Network) string {
+func Default_rpc(network Network) (string, error) {
 	switch network {
 	case Ethereum:
-		return "https://eth.public-rpc.com/"
+		return "https://eth.public-rpc.com/", nil
 	case Starknet:
-		return "https://free-rpc.nethermind.io/mainnet-juno/"
+		return "https://free-rpc.nethermind.io/mainnet-juno/", nil
 	default:
-		return fmt.Errorf("Network not supported")
+		return "", fmt.Errorf("Network not supported")
 	}
 }
 
-func Etherscan_base_url (string) {
-	return "https://api.etherscan.io/api"
+func Etherscan_base_url(network Network) (string, error) {
+	switch network {
+    case Ethereum:
+        return "https://api.etherscan.io/api", nil
+    default:
+        return "", fmt.Errorf("Network not available from etherscan")
+    }
 }
 
-func Get_current_block_number(network Network) int {
-   switch Network{
-case StarkNet:
+func Get_current_block_number(network Network) (int, error) {
+    switch network{
+    case Starknet:
 	rpc := os.Getenv("JSON_RPC")
     if rpc == "" {
-        rpc = defaultRPC(network)
+        rpc, _ = Default_rpc(network)
     }
 
     client := &http.Client{Timeout: 30 * time.Second}
@@ -55,7 +74,7 @@ case StarkNet:
         return 0, err
     }
 
-    resp, err := client.Post(rpc, "application/json", ioutil.NopCloser(bytes.NewReader(body)))
+    resp, err := client.Post(rpc, "application/json", io.NopCloser(bytes.NewReader(body)))
     if err != nil {
         return 0, err
     }
@@ -68,14 +87,14 @@ case StarkNet:
 
     result, ok := response["result"].(float64)
     if !ok {
-        return 0, RPCError(fmt.Sprintf("Error fetching current block number for Starknet: %v", response))
+        return 0, fmt.Errorf("error fetching current block number for Starknet: %v", response)
     }
 
     return int(result), nil
 case Ethereum:
 	rpc := os.Getenv("JSON_RPC")
     if rpc == "" {
-        rpc = defaultRPC(network)
+        rpc, _ = Default_rpc(network)
     }
 
     client := &http.Client{Timeout: 30 * time.Second}
@@ -102,18 +121,18 @@ case Ethereum:
 
     resultHex, ok := response["result"].(string)
     if !ok {
-        return 0, RPCError(fmt.Sprintf("Error fetching current block number for Ethereum: %v", response))
+        return 0, fmt.Errorf("error fetching current block number for Ethereum: %v", response)
     }
 
     blockNumber, err := strconv.ParseInt(resultHex, 16, 64)
     if err != nil {
-        return 0, RPCError(fmt.Sprintf("Error converting block number: %v", err))
+        return 0, fmt.Errorf("error converting block number: %v", err)
     }
 
-    return blockNumber, nil
+    return int(blockNumber), nil
 
-	case default:
-		return fmt.Errorf("Network not supported")
+	default:
+		return 0 ,fmt.Errorf("Network not supported")
     }
 
 
@@ -126,18 +145,22 @@ func Block_Identifier_To_Block(identifier BlockIdentifier, network Network)(int 
 	case earliest:
 		return 0, nil
 	case safe:
-		return 0 , fmt.Errorf("Not implemented")
+		return 0 , fmt.Errorf("not implemented")
 	case finalized:
-		return 0 , fmt.Errorf("Not implemented")
+		return 0 , fmt.Errorf("not implemented")
 	case pending:
-		return Get_current_block_number(network) + 1
+        blockNumber, err := Get_current_block_number(network)
+        if err != nil {
+            return 0, fmt.Errorf("error in getting a block number")
+        }
+		return blockNumber + 1, nil
 	default:
-		return 0 , fmt.Errorf("Block Identifier not supported")
+		return 0 , fmt.Errorf("block Identifier not supported")
 	}
 }
 
 func New_Gracfull_Killer() *GraceFullkiller {
-	killer :- &GraceFullkiller{killNow: false}
+	killer := &GraceFullkiller{killNow: false}
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
@@ -148,10 +171,10 @@ func New_Gracfull_Killer() *GraceFullkiller {
 		// Gracefully kill the process
 		killer.killNow = true
 	}()
-	return &killer
+	return killer
 }
 
-func (g *GracefulKiller) KillNow() bool {
+func (g *GraceFullkiller) KillNow() bool {
     return g.killNow
 }
 

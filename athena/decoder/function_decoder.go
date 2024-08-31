@@ -2,7 +2,7 @@ package decoder
 
 import (
 	"encoding/binary"
-	"starknet-athena/athena/types"
+	"github.com/DarkLord017/athena/athena/types"
 )
 
 type CairoFunctionDecoder struct {
