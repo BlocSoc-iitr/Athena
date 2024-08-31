@@ -3,7 +3,8 @@ package decoder
 import (
 	"encoding/binary"
 	"fmt"
-	"starknet-athena/athena/types"
+
+	"github.com/DarkLord017/athena/athena/types"
 )
 
 type CairoEventDecoder struct {
