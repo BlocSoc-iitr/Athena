@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/NethermindEth/starknet.go/rpc"
+	"github.com/NethermindEth/starknet.go/utils"
 )
 
 func Get_transactions_by_block(blockNumber *uint64) error {
@@ -40,6 +41,8 @@ func Get_transactions_by_block(blockNumber *uint64) error {
 	default:
 		log.Fatalf("Unexpected block type, found: %T\n", transactionsType)
 	}
+
+	utils.BigNumberTo
 
 	return nil
 
