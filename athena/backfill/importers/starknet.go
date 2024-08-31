@@ -1,7 +1,8 @@
-package importers
+package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -9,20 +10,24 @@ import (
 	"github.com/NethermindEth/starknet.go/utils"
 )
 
-func Get_transactions_by_block(blockNumber *uint64) error {
-
-	provider, error := rpc.NewProvider("https://free-rpc.nethermind.io/mainnet-juno/")
-	if error != nil {
-		return error
+func main() {
+	// Create a provider
+	provider, err := rpc.NewProvider("https://free-rpc.nethermind.io/mainnet-juno/")
+	if err != nil {
+		log.Fatalf("Error creating provider: %v", err)
 	}
 
-	blockId := rpc.BlockID{Number: blockNumber}
-	transactions, err := provider.BlockWithTxHashes(context.Background(), blockId)
+	// Initialize blockNumber
+	blockNumber := uint64(678000)
+	blockId := rpc.BlockID{Number: &blockNumber} // Pass the address of blockNumber
 
-	if err != nil {
+	// Fetch transactions by block number
+	transactions, error := provider.BlockWithTxHashes(context.Background(), blockId)
+	if error != nil {
 		log.Fatalf("Error fetching block data: %v", err)
 	}
 
+	// Handle the response based on its type
 	switch transactionsType := transactions.(type) {
 	case *rpc.BlockTxHashes:
 		block := transactions.(*rpc.BlockTxHashes)
@@ -42,8 +47,54 @@ func Get_transactions_by_block(blockNumber *uint64) error {
 		log.Fatalf("Unexpected block type, found: %T\n", transactionsType)
 	}
 
-	utils.BigNumberTo
+	hash_in_felt, err := utils.HexToFelt("0x11d0af90c13f9e9457fe2b9a9e76ec4750bdc542525ec644a1ccb747e139e74")
+	if err != nil {
+		log.Fatalf("Error converting hex to felt: %v", err)
+	}
 
-	return nil
+	txn_trace, err2 := provider.TraceTransaction(context.Background(), hash_in_felt)
+	if err2 != nil {
+		log.Fatalf("Error fetching transaction trace: %v", err2)
+	}
+	fmt.Println("Transaction Trace:", txn_trace)
+
+	// Pretty-print the transaction trace
+	txn_trace_json, err := json.MarshalIndent(txn_trace, "", "  ")
+	if err != nil {
+		log.Fatalf("Error formatting transaction trace: %v", err)
+	}
+
+	fmt.Println("Transaction Trace:\n", string(txn_trace_json))
+	ToBlockNumber := uint64(678000)
+
+	/// Fetching the transaction events
+	blockIdTill := rpc.BlockID{Number: &ToBlockNumber}
+	filter := rpc.EventFilter{
+		FromBlock: blockId,
+		ToBlock:   blockIdTill,
+	}
+	resultPage := rpc.ResultPageRequest{
+		ChunkSize: 100,
+	}
+
+	Input := rpc.EventsInput{
+		EventFilter:       filter,
+		ResultPageRequest: resultPage,
+	}
+
+	events, error2 := provider.Events(context.Background(), Input)
+
+	if error2 != nil {
+		log.Fatalf("Error fetching events: %v", err)
+	}
+	fmt.Println("Events:", events)
+
+	events_json, error3 := json.MarshalIndent(events, "", "  ")
+
+	if error3 != nil {
+		log.Fatalf("Error formatting events: %v", error3)
+	}
+
+	fmt.Println("Events:\n", string(events_json))
 
 }
