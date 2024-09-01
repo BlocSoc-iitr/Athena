@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"strings"
 	"unicode"
+	"github.com/urfave/cli/v2"
 )
 
 // randomAddress generates a random 20-byte ChecksumAddress in Go.
@@ -73,3 +74,6 @@ func pprintList(writeArray []string, termWidth int) []string {
 
 	return output
 }
+
+
+
