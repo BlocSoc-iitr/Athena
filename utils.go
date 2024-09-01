@@ -53,6 +53,7 @@ func camelToSnake(name string) string {
 		}
 		lastChar = char
 	}
+	return outString.String()
 }
 
 // pprintList formats a list of strings to fit within a terminal width, wrapping lines as needed.
