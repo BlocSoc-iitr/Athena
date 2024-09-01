@@ -16,10 +16,10 @@ func (ContractABI) TableName() string {
 }
 
 type BackfilledRange struct {
-	BackfillID   string                 ` gorm:"primaryKey;column:backfill_id"`
+	BackfillID   string                 `gorm:"primaryKey;column:backfill_id"`
 	DataType     types.BackfillDataType `gorm:"primaryKey;column:data_type"`
 	Network      types.SupportedNetwork `gorm:"primaryKey;column:network"`
-	StartBlock   int                    ` gorm:"primaryKey;column:start_block"`
+	StartBlock   int                    `gorm:"primaryKey;column:start_block"`
 	EndBlock     int                    `gorm:"primaryKey;column:end_block"`
 	FilterData   map[string]interface{} `gorm:"column:filter_data;type:json"`
 	MetadataDict map[string]interface{} `gorm:"column:metadata_dict;type:json"`

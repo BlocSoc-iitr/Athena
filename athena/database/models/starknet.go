@@ -46,8 +46,8 @@ type DecodedOperation struct {
 
 type Block struct {
 	AbstractBlock
-	ParentHash             string                    ` gorm:"column:parent_hash;type:text;not null"`
-	StateRoot              string                    ` gorm:"column:state_root;type:text;not null"`
+	ParentHash             string                    `gorm:"column:parent_hash;type:text;not null"`
+	StateRoot              string                    `gorm:"column:state_root;type:text;not null"`
 	SequencerAddress       string                    `gorm:"column:sequencer_address;type:text;not null"`
 	L1GasPriceWei          float64                   `gorm:"column:l1_gas_price_wei;type:numeric;not null"`
 	L1GasPriceFri          float64                   `gorm:"column:l1_gas_price_fri;type:numeric;not null"`
