@@ -3,9 +3,13 @@ package importers
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -35,13 +39,24 @@ type L1GasPrice struct {
 	PriceInFri string `json:"price_in_fri"`
 }
 
+type BlockData struct {
+	ParentHash       string     `json:"parent_hash"`
+	Timestamp        int64      `json:"timestamp"`
+	SequencerAddress string     `json:"sequencer_address"`
+	L1GasPrice       L1GasPrice `json:"l1_gas_price"`
+	StarknetVersion  string     `json:"starknet_version"`
+	L1DataGasPrice   L1GasPrice `json:"l1_data_gas_price"`
+	L1DAMode         string     `json:"l1_da_mode"`
+	BlockHash        string     `json:"block_hash"`
+}
+
 type BlockTxHashes struct {
 	ParentHash       string     `json:"parent_hash"`
 	Timestamp        int64      `json:"timestamp"`
 	SequencerAddress string     `json:"sequencer_address"`
 	L1GasPrice       L1GasPrice `json:"l1_gas_price"`
 	StarknetVersion  string     `json:"starknet_version"`
-	L1DataGasPrice   string     `json:"l1_data_gas_price"`
+	L1DataGasPrice   L1GasPrice `json:"l1_data_gas_price"`
 	L1DAMode         string     `json:"l1_da_mode"`
 	BlockHash        *string    `json:"block_hash"` // Pointer to detect nil (pending blocks)
 	Transactions     []struct {
@@ -113,10 +128,10 @@ func makeRPCCall(ctx context.Context, url string, method string, params interfac
 	return &rpcResp, nil
 }
 
-func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, toBlockNumber uint64) ([]BlockTxHashes, error) {
-	var blockDetails []BlockTxHashes
+func GetBlockHashDetails(ctx context.Context, url string, fromBlockNumber uint64, toBlockNumber uint64) ([]BlockData, error) {
+	var blockDetails []BlockData
 	var wg sync.WaitGroup
-	blockChan := make(chan BlockTxHashes, toBlockNumber-fromBlockNumber+1)
+	blockChan := make(chan BlockData, toBlockNumber-fromBlockNumber+1)
 	errChan := make(chan error, toBlockNumber-fromBlockNumber+1)
 
 	// Loop through each block number
@@ -131,13 +146,13 @@ func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, to
 				},
 			}
 
-			resp, err := makeRPCCall(ctx, url, "starknet_getBlockWithReceipts", params)
+			resp, err := makeRPCCall(ctx, url, "starknet_getBlockWithTxHashes", params)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to get block details for block %d: %v", blockNumber, err)
 				return
 			}
 
-			var block BlockTxHashes
+			var block BlockData
 			if err := json.Unmarshal(resp.Result, &block); err != nil {
 				errChan <- fmt.Errorf("failed to unmarshal block details for block %d: %v", blockNumber, err)
 				return
@@ -167,50 +182,188 @@ func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, to
 	return blockDetails, nil
 }
 
-//example usage use this to implement the logic in cli
-//IGNORE PRINT STATEMENTS
-// unc main() {
-// 	url := "https://starknet-mainnet.public.blastapi.io/rpc/v0_7" // replace with your API endpoint
-// 	fromBlockNumber := uint64(67800)
-// 	toBlockNumber := uint64(67810)
+func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, toBlock uint64) (*[]BlockTxHashes, error) {
+	var blockDetails []BlockTxHashes
+	var wg sync.WaitGroup
+	blockChan := make(chan BlockTxHashes, toBlock-fromBlockNumber+1)
+	errChan := make(chan error, toBlock-fromBlockNumber+1)
 
+	// Loop through each block number
+	for blockNumber := fromBlockNumber; blockNumber <= toBlock; blockNumber++ {
+		wg.Add(1)
+		go func(blockNumber uint64) {
+			defer wg.Done()
+
+			params := map[string]interface{}{
+				"block_id": map[string]interface{}{
+					"block_number": int(blockNumber),
+				},
+			}
+			resp, err := makeRPCCall(ctx, url, "starknet_getBlockWithReceipts", params)
+			if err != nil {
+				errChan <- fmt.Errorf("failed to get block details for block %d: %v", blockNumber, err)
+				return
+			}
+
+			var block BlockTxHashes
+			if err := json.Unmarshal(resp.Result, &block); err != nil {
+				errChan <- fmt.Errorf("failed to unmarshal block details for block %d: %v", blockNumber, err)
+				return
+			}
+
+			blockChan <- block
+		}(blockNumber)
+	}
+
+	// Close channels after all goroutines have finished
+	go func() {
+		wg.Wait()
+		close(blockChan)
+		close(errChan)
+	}()
+
+	// Collect results and handle errors
+	for block := range blockChan {
+		blockDetails = append(blockDetails, block)
+	}
+
+	// If any errors occurred, return the first one
+	if len(errChan) > 0 {
+		return nil, <-errChan
+	}
+
+	return &blockDetails, nil
+}
+
+func writeBlockHashesToCSV(blockDetails []BlockData, filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create CSV file: %v", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write the header
+	header := []string{
+		"Block Hash", "Parent Hash", "Timestamp", "Sequencer Address", "L1 Gas Price (Wei)", "L1 Gas Price (Fri)",
+		"Starknet Version", "L1 Data Gas Price (Wei)", "L1 Data Gas Price (Fri)", "L1 DA Mode",
+	}
+	if err := writer.Write(header); err != nil {
+		return fmt.Errorf("failed to write CSV header: %v", err)
+	}
+
+	// Write the data
+	for _, block := range blockDetails {
+		record := []string{
+			block.BlockHash,
+			block.ParentHash,
+			strconv.FormatInt(block.Timestamp, 10),
+			block.SequencerAddress,
+			block.L1GasPrice.PriceInWei,
+			block.L1GasPrice.PriceInFri,
+			block.StarknetVersion,
+			block.L1DataGasPrice.PriceInWei,
+			block.L1DataGasPrice.PriceInFri,
+			block.L1DAMode,
+		}
+		if err := writer.Write(record); err != nil {
+			return fmt.Errorf("failed to write CSV record: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func writeBlockDetailsToCSV(blockDetails *[]BlockTxHashes, filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create CSV file: %v", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write the header
+	header := []string{
+		"Transaction Hash", "Receipt Type", "Actual Fee Amount", "Actual Fee Unit", "Execution Status",
+		"Finality Status", "Execution Steps", "Pedersen Builtin Applications",
+		"Range Check Builtin Applications", "Ecdsa Builtin Applications",
+		"Events Data",
+	}
+	if err := writer.Write(header); err != nil {
+		return fmt.Errorf("failed to write CSV header: %v", err)
+	}
+
+	// Write the data
+	for _, block := range *blockDetails {
+		for _, tx := range block.Transactions {
+			eventsData := []string{}
+			for _, event := range tx.Receipt.Events {
+				eventData := fmt.Sprintf(
+					"From Address: %s, Keys: %s, Data: %s",
+					event.FromAddress,
+					strings.Join(event.Keys, ","),
+					strings.Join(event.Data, ","),
+				)
+				eventsData = append(eventsData, eventData)
+			}
+			eventsDataStr := strings.Join(eventsData, " | ")
+
+			record := []string{
+				tx.Hash,
+				tx.Receipt.Type,
+				tx.Receipt.ActualFee.Amount,
+				tx.Receipt.ActualFee.Unit,
+				tx.Receipt.ExecutionStatus,
+				tx.Receipt.FinalityStatus,
+				strconv.Itoa(tx.Receipt.ExecutionResources.Steps),
+				strconv.Itoa(tx.Receipt.ExecutionResources.PedersenBuiltinApplications),
+				strconv.Itoa(tx.Receipt.ExecutionResources.RangeCheckBuiltinApplications),
+				strconv.Itoa(tx.Receipt.ExecutionResources.EcdsaBuiltinApplications),
+				eventsDataStr,
+			}
+			if err := writer.Write(record); err != nil {
+				return fmt.Errorf("failed to write CSV record: %v", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+/*example use*/
+// func main() {
 // 	ctx := context.Background()
-// 	blockDetails, err := GetBlockDetails(ctx, url, fromBlockNumber, toBlockNumber)
+// 	url := "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+
+// 	// Block numbers range
+// 	fromBlock := uint64(67800)
+// 	toBlock := uint64(67810)
+
+// 	// Get block hash details and write to CSV
+// 	blockHashes, err := GetBlockHashDetails(ctx, url, fromBlock, toBlock)
 // 	if err != nil {
-// 		log.Fatalf("Error fetching block details: %v", err)
+// 		fmt.Printf("Error getting block hash details: %v\n", err)
+// 		return
 // 	}
-
-// 	// Print block details
-// 	for _, block := range blockDetails {
-// 		fmt.Printf("Block Hash: %v\n", block.BlockHash)
-// 		fmt.Printf("Timestamp: %d\n", block.Timestamp)
-// 		fmt.Printf("Sequencer Address: %s\n", block.SequencerAddress)
-// 		fmt.Printf("L1 Gas Price: %s %s\n", block.L1GasPrice.PriceInWei, block.L1GasPrice.PriceInFri)
-// 		fmt.Printf("Starknet Version: %s\n", block.StarknetVersion)
-// 		fmt.Printf("L1 Data Gas Price: %s\n", block.L1DataGasPrice)
-// 		fmt.Printf("L1 DA Mode: %s\n", block.L1DAMode)
-
-// 		fmt.Println("Transactions:")
-// 		for _, tx := range block.Transactions {
-// 			fmt.Printf("  Transaction Hash: %s\n", tx.Hash)
-// 			fmt.Printf("  Receipt Type: %s\n", tx.Receipt.Type)
-// 			fmt.Printf("  Transaction Hash: %s\n", tx.Receipt.TransactionHash)
-// 			fmt.Printf("  Actual Fee: %s %s\n", tx.Receipt.ActualFee.Amount, tx.Receipt.ActualFee.Unit)
-// 			fmt.Printf("  Execution Status: %s\n", tx.Receipt.ExecutionStatus)
-// 			fmt.Printf("  Finality Status: %s\n", tx.Receipt.FinalityStatus)
-
-// 			fmt.Println("  Events:")
-// 			for _, event := range tx.Receipt.Events {
-// 				fmt.Printf("    From Address: %s\n", event.FromAddress)
-// 				fmt.Printf("    Keys: %v\n", event.Keys)
-// 				fmt.Printf("    Data: %v\n", event.Data)
-// 			}
-
-// 			fmt.Printf("  Execution Resources:\n")
-// 			fmt.Printf("    Steps: %d\n", tx.Receipt.ExecutionResources.Steps)
-// 			fmt.Printf("    Pedersen Built-in Applications: %d\n", tx.Receipt.ExecutionResources.PedersenBuiltinApplications)
-// 			fmt.Printf("    Range Check Built-in Applications: %d\n", tx.Receipt.ExecutionResources.RangeCheckBuiltinApplications)
-// 			fmt.Printf("    ECDSA Built-in Applications: %d\n", tx.Receipt.ExecutionResources.EcdsaBuiltinApplications)
-// 		}
+// 	if err := writeBlockHashesToCSV(blockHashes, "block_hashes.csv"); err != nil {
+// 		fmt.Printf("Error writing block hash details to CSV: %v\n", err)
+// 		return
 // 	}
+// 	fmt.Println("Block hash details written to block_hashes.csv")
+
+// 	// Get block details and write to CSV
+// 	blockDetails, err := GetBlockDetails(ctx, url, fromBlock, toBlock)
+// 	if err != nil {
+// 		fmt.Printf("Error getting block details: %v\n", err)
+// 		return
+// 	}
+// 	if err := writeBlockDetailsToCSV(blockDetails, "block_details.csv"); err != nil {
+// 		fmt.Printf("Error writing block details to CSV: %v\n", err)
+// 		return
+// 	}
+// 	fmt.Println("Block details written to block_details.csv")
 // }
