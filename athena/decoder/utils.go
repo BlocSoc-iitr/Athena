@@ -9,6 +9,55 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
+func extractFunctionSignature(txData []byte) []byte {
+	if len(txData) < 4 {
+		return nil // Not enough data to extract signature
+	}
+	return txData[:4] // Assuming the first 4 bytes are the function signature
+}
+func splitTxData(txData []byte) (calldata [][]byte, result [][]byte) {
+	if len(txData) <= 4 {
+		return [][]byte{}, [][]byte{} // No calldata if data length is less than or equal to 4
+	}
+	
+	// Extract the function signature
+	signature := txData[:4]
+	
+	// The remaining bytes are considered calldata
+	calldata = [][]byte{signature, txData[4:]} // Splitting into signature and the rest as calldata
+
+	// In this example, we don't have a separate result part, so result is empty
+	return calldata, [][]byte{}
+}
+func extractEventSignature(eventData []byte) []byte {
+	if len(eventData) < 4 {
+		return nil // Not enough data to extract signature
+	}
+	return eventData[:4] // Assuming the first 4 bytes are the event signature
+}
+func extractIndexedParams(eventData []byte) int {
+	// This is a placeholder. You need to implement this based on your data format
+	// Typically, this could be extracted from event metadata or ABI information.
+	return 0 // Default value; replace with actual logic as needed
+}
+func splitEventData(eventData []byte) (data [][]byte, keys [][]byte) {
+	if len(eventData) <= 4 {
+		return [][]byte{}, [][]byte{} // Not enough data to split
+	}
+	
+	// Extract the event signature
+	signature := eventData[:4]
+	
+	// The rest of the data
+	remainingData := eventData[4:]
+	
+	// Assuming you need to split remainingData into data and keys
+	// For simplicity, this example treats all remaining data as a single part.
+	data = [][]byte{signature, remainingData}
+	keys = [][]byte{} // You would split into keys based on your specific data format
+
+	return data, keys
+}
 func AbiToSignature(abiFunc abi.Method) string {
 	collapsed := make([]string, len(abiFunc.Inputs))
 	for i, input := range abiFunc.Inputs {

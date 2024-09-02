@@ -41,12 +41,21 @@ func (e *DatabaseError) Error() string {
 }
 
 // DecodingError is raised when issues occur with input decoding during data backfills.
-type DecodingError struct{}
-
-func (e *DecodingError) Error() string {
-    return "issues occurred with input decoding during data backfills"
+type DecodingError struct {
+	Message string
 }
 
+// Error implements the error interface for DecodingError.
+func (e *DecodingError) Error() string {
+	return e.Message
+}
+
+// NewDecodingError creates a new DecodingError with a custom message.
+func NewDecodingError(message string) error {
+	return &DecodingError{
+		Message: message,
+	}
+}
 // UniswapV3Revert is raised when a pool action causes behavior that would throw a revert on-chain.
 type UniswapV3Revert struct{}
 
