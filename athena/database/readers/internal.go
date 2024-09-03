@@ -43,17 +43,20 @@ func FetchBackfillsByID(db *gorm.DB, backfillID interface{}) ([]models.Backfille
 func GetAbis(db *gorm.DB, abiNames []string, decoderOS string) ([]models.ContractABI) {
     if db != nil {
         var contractABIs []models.ContractABI
-        query := db.Where("decoder_os = ?", decoderOS)
+		query := db.Where("decoder_os = ?", decoderOS)
 
-        if len(abiNames) > 0 {
-            query = query.Where("abi_name IN ?", abiNames)
-        }
-
-        query.Order("priority DESC, abi_name").Find(&contractABIs)
-		if query.Error != nil {
-			log.Fatalf("Error in fetching abis: %v", query.Error)
+		if len(abiNames) > 0 {
+			query = query.Where("abi_name IN ?", abiNames)
 		}
-        return contractABIs
+
+		result := query.Order("priority DESC, abi_name").Find(&contractABIs)
+
+		if result.Error != nil {
+    		log.Fatalf("Error querying database: %v", result.Error)
+		} else if result.RowsAffected == 0 {
+    		log.Fatalf("No ABIs found for decoderOS: %s and abiNames: %v", decoderOS, abiNames)
+		}
+		return contractABIs
     }
 
     appDir, err := os.UserConfigDir()

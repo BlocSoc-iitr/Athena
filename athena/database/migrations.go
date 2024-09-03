@@ -18,7 +18,7 @@ import (
 // 	migrateUp(db)
 // }
 
-func migrateUp(db *gorm.DB) {
+func MigrateUp(db *gorm.DB) {
 	// Here you would import and migrate each model like below:
 	// This is equivalent to the Python imports in your code
 

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"gorm.io/gorm"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -83,19 +84,21 @@ type TableInfo struct {
 type ColumnInfo struct {
 	Name string
 	Type string
+	DefaultValue string
 }
 
 // GetTableInfo retrieves table information from the MySQL database
-func AutomapSqlalchemyModel(db *sql.DB, tableNames []string, schema string) (map[string]TableInfo) {
+func AutomapSqlalchemyModel(db *gorm.DB, tableNames []string, schema string) map[string]TableInfo {
 	logger.Infof("Getting table info for %v from schema %s", tableNames, schema)
 
 	result := make(map[string]TableInfo)
 
 	for _, tableName := range tableNames {
 		query := fmt.Sprintf("SHOW COLUMNS FROM %s.%s", schema, tableName)
-		rows, err := db.Query(query)
+		rows, err := db.Raw(query).Rows()
 		if err != nil {
 			logger.Errorf("could not get columns for table %s: %v", tableName, err)
+			continue
 		}
 		defer rows.Close()
 
@@ -107,7 +110,9 @@ func AutomapSqlalchemyModel(db *sql.DB, tableNames []string, schema string) (map
 			err := rows.Scan(&column.Name, &column.Type, &null, &key, &defaultValue, &extra)
 			if err != nil {
 				logger.Errorf("error scanning column info: %v", err)
+				continue
 			}
+			column.DefaultValue = defaultValue.String
 			columns = append(columns, column)
 		}
 

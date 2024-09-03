@@ -18,6 +18,7 @@ require (
 	github.com/spf13/afero v1.11.0
 	github.com/urfave/cli/v2 v2.25.7
 	gorm.io/datatypes v1.2.1
+	gorm.io/driver/mysql v1.5.6
 	gorm.io/gorm v1.25.11
 )
 
@@ -54,5 +55,4 @@ require (
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.6 // indirect
 )
