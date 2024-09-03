@@ -10,6 +10,8 @@ require (
 require (
 	github.com/NethermindEth/juno v0.3.1
 	github.com/ethereum/go-ethereum v1.14.8
+	github.com/jinzhu/gorm v1.9.16
+	github.com/spf13/afero v1.8.2
 	gorm.io/datatypes v1.2.1
 	gorm.io/gorm v1.25.11
 )
