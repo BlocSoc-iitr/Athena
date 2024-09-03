@@ -7,6 +7,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"log"
 	"strings"
+	"gorm.io/gorm"
 )
 
 type DecodingDispatcher struct {
@@ -15,10 +16,10 @@ type DecodingDispatcher struct {
 	all_abis         bool
 	functionDecoders map[string]AbiFunctionDecoder//map of function decoders with signature as key and function decoder as value
 	eventDecoders    map[string]map[int]AbiEventDecoder//map of event decoders with signature as key and map of indexed parameters and event decoder as value
-	dbSession        *sqlx.DB //type? to be implemented in database
+	dbSession        *gorm.DB //type? to be implemented in database
 }
 
-func NewDecodingDispatcher(bind *sqlx.DB) *DecodingDispatcher {//constructor function
+func NewDecodingDispatcher(bind *gorm.DB) *DecodingDispatcher {//constructor function
 	return &DecodingDispatcher{
 		dbSession:        bind,
 		loadedABIs:       []string{},
