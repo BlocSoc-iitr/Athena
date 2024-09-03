@@ -1,4 +1,4 @@
-package importers
+package main
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -60,7 +59,13 @@ type BlockTxHashes struct {
 	L1DAMode         string     `json:"l1_da_mode"`
 	BlockHash        *string    `json:"block_hash"` // Pointer to detect nil (pending blocks)
 	Transactions     []struct {
-		Hash    string `json:"hash"`
+		Transaction struct {
+			Hash      string   `json:"transaction_hash"`
+			Version   string   `json:"version"`
+			Nonce     string   `json:"nonce"`
+			Calldata  []string `json:"calldata"`
+			Signature []string `json:"signature"`
+		} `json:"transaction"`
 		Receipt struct {
 			Type            string `json:"type"`
 			TransactionHash string `json:"transaction_hash"`
@@ -276,57 +281,56 @@ func writeBlockHashesToCSV(blockDetails []BlockData, filename string) error {
 	return nil
 }
 
-func writeBlockDetailsToCSV(blockDetails *[]BlockTxHashes, filename string) error {
+func writeBlockDetailsToCSV(blockDetails []BlockTxHashes, filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
-		return fmt.Errorf("failed to create CSV file: %v", err)
+		return fmt.Errorf("failed to create CSV file: %w", err)
 	}
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Write the header
+	// Write the header with all relevant fields
 	header := []string{
-		"Transaction Hash", "Receipt Type", "Actual Fee Amount", "Actual Fee Unit", "Execution Status",
-		"Finality Status", "Execution Steps", "Pedersen Builtin Applications",
-		"Range Check Builtin Applications", "Ecdsa Builtin Applications",
-		"Events Data",
+		"Transaction Hash", "Version", "Nonce", "Calldata", "Signature",
+		"Receipt Type", "Transaction Hash", "Actual Fee Amount", "Actual Fee Unit", "Execution Status",
+		"Finality Status", "Event From Address", "Event Keys", "Event Data",
+		"Steps", "Pedersen Builtin Applications", "Range Check Builtin Applications", "ECDSA Builtin Applications",
 	}
 	if err := writer.Write(header); err != nil {
-		return fmt.Errorf("failed to write CSV header: %v", err)
+		return fmt.Errorf("failed to write header to CSV file: %w", err)
 	}
 
-	// Write the data
-	for _, block := range *blockDetails {
+	// Write block and transaction details
+	for _, block := range blockDetails {
 		for _, tx := range block.Transactions {
-			eventsData := []string{}
-			for _, event := range tx.Receipt.Events {
-				eventData := fmt.Sprintf(
-					"From Address: %s, Keys: %s, Data: %s",
-					event.FromAddress,
-					strings.Join(event.Keys, ","),
-					strings.Join(event.Data, ","),
-				)
-				eventsData = append(eventsData, eventData)
-			}
-			eventsDataStr := strings.Join(eventsData, " | ")
+			// Flatten the events into strings
+			events := flattenEvents(tx.Receipt.Events)
 
 			record := []string{
-				tx.Hash,
+				tx.Transaction.Hash,
+				tx.Transaction.Version,
+				tx.Transaction.Nonce,
+				fmt.Sprintf("%v", tx.Transaction.Calldata),
+				fmt.Sprintf("%v", tx.Transaction.Signature),
 				tx.Receipt.Type,
+				tx.Receipt.TransactionHash,
 				tx.Receipt.ActualFee.Amount,
 				tx.Receipt.ActualFee.Unit,
 				tx.Receipt.ExecutionStatus,
 				tx.Receipt.FinalityStatus,
-				strconv.Itoa(tx.Receipt.ExecutionResources.Steps),
-				strconv.Itoa(tx.Receipt.ExecutionResources.PedersenBuiltinApplications),
-				strconv.Itoa(tx.Receipt.ExecutionResources.RangeCheckBuiltinApplications),
-				strconv.Itoa(tx.Receipt.ExecutionResources.EcdsaBuiltinApplications),
-				eventsDataStr,
+				events.FromAddress,
+				events.Keys,
+				events.Data,
+				fmt.Sprintf("%d", tx.Receipt.ExecutionResources.Steps),
+				fmt.Sprintf("%d", tx.Receipt.ExecutionResources.PedersenBuiltinApplications),
+				fmt.Sprintf("%d", tx.Receipt.ExecutionResources.RangeCheckBuiltinApplications),
+				fmt.Sprintf("%d", tx.Receipt.ExecutionResources.EcdsaBuiltinApplications),
 			}
+
 			if err := writer.Write(record); err != nil {
-				return fmt.Errorf("failed to write CSV record: %v", err)
+				return fmt.Errorf("failed to write record to CSV file: %w", err)
 			}
 		}
 	}
@@ -334,36 +338,64 @@ func writeBlockDetailsToCSV(blockDetails *[]BlockTxHashes, filename string) erro
 	return nil
 }
 
+func flattenEvents(events []struct {
+	FromAddress string   `json:"from_address"`
+	Keys        []string `json:"keys"`
+	Data        []string `json:"data"`
+}) (flattened struct {
+	FromAddress string
+	Keys        string
+	Data        string
+}) {
+	for _, event := range events {
+		flattened.FromAddress += event.FromAddress + ";"
+		flattened.Keys += fmt.Sprintf("%v", event.Keys) + ";"
+		flattened.Data += fmt.Sprintf("%v", event.Data) + ";"
+	}
+
+	// Remove the last semicolon
+	if len(flattened.FromAddress) > 0 {
+		flattened.FromAddress = flattened.FromAddress[:len(flattened.FromAddress)-1]
+	}
+	if len(flattened.Keys) > 0 {
+		flattened.Keys = flattened.Keys[:len(flattened.Keys)-1]
+	}
+	if len(flattened.Data) > 0 {
+		flattened.Data = flattened.Data[:len(flattened.Data)-1]
+	}
+
+	return
+}
+
 /*example use*/
-// func main() {
-// 	ctx := context.Background()
-// 	url := "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+func main() {
+	ctx := context.Background()
+	url := "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+	// Block numbers range
+	fromBlock := uint64(67800)
+	toBlock := uint64(67810)
 
-// 	// Block numbers range
-// 	fromBlock := uint64(67800)
-// 	toBlock := uint64(67810)
+	// Get block hash details and write to CSV
+	blockHashes, err := GetBlockHashDetails(ctx, url, fromBlock, toBlock)
+	if err != nil {
+		fmt.Printf("Error getting block hash details: %v\n", err)
+		return
+	}
+	if err := writeBlockHashesToCSV(blockHashes, "block_hashes.csv"); err != nil {
+		fmt.Printf("Error writing block hash details to CSV: %v\n", err)
+		return
+	}
+	fmt.Println("Block hash details written to block_hashes.csv")
 
-// 	// Get block hash details and write to CSV
-// 	blockHashes, err := GetBlockHashDetails(ctx, url, fromBlock, toBlock)
-// 	if err != nil {
-// 		fmt.Printf("Error getting block hash details: %v\n", err)
-// 		return
-// 	}
-// 	if err := writeBlockHashesToCSV(blockHashes, "block_hashes.csv"); err != nil {
-// 		fmt.Printf("Error writing block hash details to CSV: %v\n", err)
-// 		return
-// 	}
-// 	fmt.Println("Block hash details written to block_hashes.csv")
-
-// 	// Get block details and write to CSV
-// 	blockDetails, err := GetBlockDetails(ctx, url, fromBlock, toBlock)
-// 	if err != nil {
-// 		fmt.Printf("Error getting block details: %v\n", err)
-// 		return
-// 	}
-// 	if err := writeBlockDetailsToCSV(blockDetails, "block_details.csv"); err != nil {
-// 		fmt.Printf("Error writing block details to CSV: %v\n", err)
-// 		return
-// 	}
-// 	fmt.Println("Block details written to block_details.csv")
-// }
+	// Get block details and write to CSV
+	blockDetails, err := GetBlockDetails(ctx, url, fromBlock, toBlock)
+	if err != nil {
+		fmt.Printf("Error getting block details: %v\n", err)
+		return
+	}
+	if err := writeBlockDetailsToCSV(*blockDetails, "block_details.csv"); err != nil {
+		fmt.Printf("Error writing block details to CSV: %v\n", err)
+		return
+	}
+	fmt.Println("Block details written to block_details.csv")
+}
