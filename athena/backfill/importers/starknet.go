@@ -1,4 +1,4 @@
-package main
+package importers
 
 import (
 	"bytes"
@@ -90,7 +90,7 @@ type BlockTxHashes struct {
 	} `json:"transactions"`
 }
 
-func makeRPCCall(ctx context.Context, url string, method string, params interface{}) (*rpcResponse, error) {
+func MakeRPCCall(ctx context.Context, url string, method string, params interface{}) (*rpcResponse, error) {
 	reqBody := rpcRequest{
 		Jsonrpc: "2.0",
 		Method:  method,
@@ -151,7 +151,7 @@ func GetBlockHashDetails(ctx context.Context, url string, fromBlockNumber uint64
 				},
 			}
 
-			resp, err := makeRPCCall(ctx, url, "starknet_getBlockWithTxHashes", params)
+			resp, err := MakeRPCCall(ctx, url, "starknet_getBlockWithTxHashes", params)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to get block details for block %d: %v", blockNumber, err)
 				return
@@ -204,7 +204,7 @@ func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, to
 					"block_number": int(blockNumber),
 				},
 			}
-			resp, err := makeRPCCall(ctx, url, "starknet_getBlockWithReceipts", params)
+			resp, err := MakeRPCCall(ctx, url, "starknet_getBlockWithReceipts", params)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to get block details for block %d: %v", blockNumber, err)
 				return
@@ -240,7 +240,7 @@ func GetBlockDetails(ctx context.Context, url string, fromBlockNumber uint64, to
 	return &blockDetails, nil
 }
 
-func writeBlockHashesToCSV(blockDetails []BlockData, filename string) error {
+func WriteBlockHashesToCSV(blockDetails []BlockData, filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("failed to create CSV file: %v", err)
@@ -281,7 +281,7 @@ func writeBlockHashesToCSV(blockDetails []BlockData, filename string) error {
 	return nil
 }
 
-func writeBlockDetailsToCSV(blockDetails []BlockTxHashes, filename string) error {
+func WriteBlockDetailsToCSV(blockDetails []BlockTxHashes, filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("failed to create CSV file: %w", err)
@@ -365,37 +365,4 @@ func flattenEvents(events []struct {
 	}
 
 	return
-}
-
-/*example use*/
-func main() {
-	ctx := context.Background()
-	url := "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
-	// Block numbers range
-	fromBlock := uint64(67800)
-	toBlock := uint64(67810)
-
-	// Get block hash details and write to CSV
-	blockHashes, err := GetBlockHashDetails(ctx, url, fromBlock, toBlock)
-	if err != nil {
-		fmt.Printf("Error getting block hash details: %v\n", err)
-		return
-	}
-	if err := writeBlockHashesToCSV(blockHashes, "block_hashes.csv"); err != nil {
-		fmt.Printf("Error writing block hash details to CSV: %v\n", err)
-		return
-	}
-	fmt.Println("Block hash details written to block_hashes.csv")
-
-	// Get block details and write to CSV
-	blockDetails, err := GetBlockDetails(ctx, url, fromBlock, toBlock)
-	if err != nil {
-		fmt.Printf("Error getting block details: %v\n", err)
-		return
-	}
-	if err := writeBlockDetailsToCSV(*blockDetails, "block_details.csv"); err != nil {
-		fmt.Printf("Error writing block details to CSV: %v\n", err)
-		return
-	}
-	fmt.Println("Block details written to block_details.csv")
 }

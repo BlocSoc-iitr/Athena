@@ -9,7 +9,7 @@ import (
 	"github.com/NethermindEth/starknet.go/utils"
 )
 
-func filterEventsByContractAddress(providername string, contractAddress string, FromBlockNumber uint64, ToBlockNumber uint64, filename string) {
+func FilterEventsByContractAddress(providername string, contractAddress string, FromBlockNumber uint64, ToBlockNumber uint64, filename string) {
 	provider, err := rpc.NewProvider(providername)
 	if err != nil {
 		log.Fatalf("Error creating provider: %v", err)
@@ -44,7 +44,7 @@ func filterEventsByContractAddress(providername string, contractAddress string, 
 
 }
 
-func filterEventsByHexKeyString(providername string, hexKeyString []string, FromBlockNumber uint64, ToBlockNumber uint64, filename string) {
+func FilterEventsByHexKeyString(providername string, hexKeyString []string, FromBlockNumber uint64, ToBlockNumber uint64, filename string) {
 	provider, err := rpc.NewProvider(providername)
 	if err != nil {
 		log.Fatalf("Error creating provider: %v", err)
