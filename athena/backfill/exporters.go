@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
+
 	"strings"
 	"time"
 )
@@ -77,12 +77,12 @@ func NewFileResourceExporter(fileName string, append bool) (*FileResourceExporte
 	}
 
 	// Determine file mode
-	var mode string
-	if append {
-		mode = "a"
-	} else {
-		mode = "w"
-	}
+	// var mode string
+	// if append {
+	// 	mode = "a"
+	// } else {
+	// 	mode = "w"
+	// }
 
 	// Open file
 	fileHandle, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0644)
