@@ -2,10 +2,10 @@ package decoder
 
 import (
 	"encoding/json"
-	"github.com/BlocSoc-iitr/Athena/athena/types
+	"github.com/BlocSoc-iitr/Athena/athena/types"
 	
 )
-type Function struct {
+type Function1 struct {
 	Name    string   `json:"name"`
 	Inputs  []types.AbiParameter `json:"inputs"`
 	Outputs []types.StarknetType `json:"outputs"`
