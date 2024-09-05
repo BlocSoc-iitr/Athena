@@ -1,4 +1,4 @@
-module github.com/DarkLord017/athena
+module github.com/BlocSoc-iitr/Athena
 
 go 1.22.5
 

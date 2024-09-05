@@ -1,9 +1,11 @@
 package readers
 
 import (
-	"github.com/DarkLord017/athena/athena/types"
+	"github.com/BlocSoc-iitr/Athena/athena/types"
+
 	"gorm.io/gorm"
-	"github.com/DarkLord017/athena/athena/database/models"
+	"github.com/BlocSoc-iitr/Athena/athena/datbase/models"
+	
 	"log"
 	"os"
 	"encoding/json"

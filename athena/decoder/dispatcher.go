@@ -3,7 +3,8 @@ package decoder
 import (
 	"errors"
 	"fmt"
-	"github.com/DarkLord017/athena"
+	"github.com/BlocSoc-iitr/Athena"
+	
 	"github.com/olekukonko/tablewriter"
 	"log"
 	"strings"
