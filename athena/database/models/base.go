@@ -16,7 +16,7 @@ type AbstractBlock struct {
 }
 
 type AbstractTransaction struct {
-	TransactionHash  string   `gorm:"column:transaction_hash;primaryKey;type:text"`
+	TransactionHash  string   `gorm:"column:transaction_hash;primaryKey;type:varchar(66);index"`
 	BlockNumber      uint64   `gorm:"column:block_number;type:bigint;index"`
 	TransactionIndex int      `gorm:"column:transaction_index;type:int"`
 	Timestamp        int64    `gorm:"column:timestamp;type:bigint"`
@@ -27,7 +27,7 @@ type AbstractEvent struct {
 	BlockNumber      uint64 `gorm:"column:block_number;type:bigint;index"`
 	EventIndex       int    `gorm:"column:event_index;type:int"`
 	TransactionIndex int    `gorm:"column:transaction_index;type:int"`
-	ContractAddress  string `gorm:"column:contract_address;type:text;index"`
+	ContractAddress  string `gorm:"column:contract_address;type:varchar(42);index"`
 }
 
 type AbstractTrace struct {

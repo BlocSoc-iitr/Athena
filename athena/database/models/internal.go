@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/BlocSoc-iitr/Athena/athena/types"
-	
 )
 
 type ContractABI struct {

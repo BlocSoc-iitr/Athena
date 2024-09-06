@@ -61,34 +61,34 @@ type Block struct {
 
 type DefaultEvent struct {
 	AbstractEvent
-	Keys          []string               `gorm:"column:keys;type:jsonb;not null"`
-	Data          []string               `gorm:"column:data;type:jsonb"`
+	Keys          []string               `gorm:"column:keys;type:json;not null"`
+	Data          []string               `gorm:"column:data;type:json"`
 	ClassHash     sql.NullString         `gorm:"column:class_hash;type:text"`
-	EventName     sql.NullString         `gorm:"column:event_name;type:text;index"`
-	DecodedParams map[string]interface{} `gorm:"column:decoded_params;type:jsonb"`
+	EventName     sql.NullString         `gorm:"column:event_name;type:varchar(255);index"`
+	DecodedParams map[string]interface{} `gorm:"column:decoded_params;type:json"`
 }
 
 type Transaction struct {
 	AbstractTransaction
 	Type                  StarknetTxType         `gorm:"column:type;type:varchar(20);not null"`
 	Nonce                 int                    `gorm:"column:nonce;type:int;not null"`
-	Signature             []string               `gorm:"column:signature;type:jsonb;not null"`
+	Signature             []string               `gorm:"column:signature;type:json;not null"`
 	Version               int                    `gorm:"column:version;type:int;not null"`
 	Status                TransactionStatus      `gorm:"column:status;type:varchar(20);not null"`
 	MaxFee                float64                `gorm:"column:max_fee;type:numeric;not null"`
 	ActualFee             float64                `gorm:"column:actual_fee;type:numeric;not null"`
 	FeeUnit               StarknetFeeUnit        `gorm:"column:fee_unit;type:varchar(5);not null"`
-	ExecutionResources    map[string]interface{} `gorm:"column:execution_resources;type:jsonb;not null"`
+	ExecutionResources    map[string]interface{} `gorm:"column:execution_resources;type:json;not null"`
 	Tip                   float64                `gorm:"column:tip;type:numeric"`
-	ResourceBounds        map[string]int         `gorm:"column:resource_bounds;type:jsonb"`
-	PaymasterData         []string               `gorm:"column:paymaster_data;type:jsonb"`
-	AccountDeploymentData []string               `gorm:"column:account_deployment_data;type:jsonb"`
-	ContractAddress       sql.NullString         `gorm:"column:contract_address;type:text;index"`
+	ResourceBounds        map[string]int         `gorm:"column:resource_bounds;type:json"`
+	PaymasterData         []string               `gorm:"column:paymaster_data;type:json"`
+	AccountDeploymentData []string               `gorm:"column:account_deployment_data;type:json"`
+	ContractAddress 	  sql.NullString         `gorm:"column:contract_address;type:varchar(42);index"`
 	Selector              string                 `gorm:"column:selector;type:text;not null"`
-	Calldata              []string               `gorm:"column:calldata;type:jsonb;not null"`
-	ClassHash             sql.NullString         `gorm:"column:class_hash;type:text"`
-	UserOperations        []DecodedOperation     `gorm:"column:user_operations;type:jsonb"`
-	RevertError           sql.NullString         `gorm:"column:revert_error;type:text"`
+	Calldata              []string               `gorm:"column:calldata;type:json;not null"`
+	ClassHash             sql.NullString         `gorm:"column:class_hash;type:varchar(100);index"`
+	UserOperations        []DecodedOperation     `gorm:"column:user_operations;type:json"`
+	RevertError           sql.NullString         `gorm:"column:revert_error;type:varchar(500);index"`
 }
 
 type ERC20Transfer struct {
