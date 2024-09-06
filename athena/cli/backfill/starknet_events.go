@@ -5,8 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-
-	"github.com/DarkLord017/athena/athena/backfill/importers"
+	"github.com/BlocSoc-iitr/Athena/athena/backfill/importers"
 	"github.com/NethermindEth/starknet.go/rpc"
 )
 
