@@ -245,23 +245,3 @@ func writeBlockTimestamps(timestamps []types.BlockTimestamp, network types.Suppo
 
 	logger.Info("Block timestamps written successfully")
 }
-
-
-// func main() {
-// 	// Database initialization
-// 	var err error
-// 	db, err = gorm.Open("mysql", "user:password@tcp(localhost:3306)/dbname?charset=utf8&parseTime=True&loc=Local")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer db.Close()
-
-// 	// Example usage
-// 	abi := &models.ContractABI{
-// 		AbiName:   "example",
-// 		DecoderOS: "EVM",
-// 	}
-// 	if err := writeABI(abi, db); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
