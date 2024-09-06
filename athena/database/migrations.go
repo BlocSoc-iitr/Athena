@@ -7,17 +7,6 @@ import (
 	"github.com/DarkLord017/athena/athena/database/models"
 )
 
-// func main() {
-// 	dsn := "user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-// 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 	if err != nil {
-// 		log.Fatalf("Failed to connect to the database: %v", err)
-// 	}
-
-// 	// Migrate models
-// 	migrateUp(db)
-// }
-
 func MigrateUp(db *gorm.DB) {
 	// Here you would import and migrate each model like below:
 	// This is equivalent to the Python imports in your code
