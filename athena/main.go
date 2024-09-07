@@ -13,6 +13,7 @@ import (
     "os/exec"
     "path/filepath"
     "net/url"
+    // "github.com/BlocSoc-iitr/Athena/athena/decoder"
 )
 
 var (
@@ -63,19 +64,20 @@ func GetABIHandler(w http.ResponseWriter, r *http.Request) {
     log.Println("Received request to fetch ABI")
     enableCors(w)
 
-    var requestData map[string]string
+    var requestData map[string]interface{}
     if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
         log.Printf("Error decoding request body: %v", err)
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
 
-    classHash := requestData["classHash"]
-    jsonRpcUrl := requestData["jsonRpcUrl"]
+    classHash := requestData["classHash"].(string)
+    jsonRpcUrl := requestData["jsonRpcUrl"].(string)
+    decodeFlag := requestData["decode"].(bool)
 
-    log.Printf("classHash: %s, jsonRpcUrl: %s", classHash, jsonRpcUrl)
+    log.Printf("classHash: %s, jsonRpcUrl: %s, decode: %v", classHash, jsonRpcUrl, decodeFlag)
 
-    abi, err := GetStarknetABI(classHash, jsonRpcUrl)
+    abi, err := GetStarknetABI(classHash, jsonRpcUrl, decodeFlag)
     if err != nil {
         log.Printf("Error fetching ABI: %v", err)
         http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -87,10 +89,13 @@ func GetABIHandler(w http.ResponseWriter, r *http.Request) {
     w.Write(abi)
 }
 
-func GetStarknetABI(classHash, jsonRpcUrl string) ([]byte, error) {
-    log.Printf("Running CLI command to fetch ABI with classHash: %s, jsonRpcUrl: %s", classHash, jsonRpcUrl)
+func GetStarknetABI(classHash, jsonRpcUrl string, decode bool) ([]byte, error) {
+    cmdArgs := []string{"run", "cli/get/starknet.go", "--classHash", classHash, "--jsonRpcUrl", jsonRpcUrl, "--output", "abi.json"}
+    if decode {
+        cmdArgs = append(cmdArgs, "--decode") // Append decode flag if needed
+    }
 
-    cmd := exec.Command("go", "run", "cli/get/starknet.go", "--classHash", classHash, "--jsonRpcUrl", jsonRpcUrl, "--output", "abi.json")
+    cmd := exec.Command("go", cmdArgs...)
     var out, stderr bytes.Buffer
     cmd.Stdout = &out
     cmd.Stderr = &stderr
@@ -100,17 +105,16 @@ func GetStarknetABI(classHash, jsonRpcUrl string) ([]byte, error) {
         return nil, fmt.Errorf("error running CLI tool: %v, stderr: %s", err, stderr.String())
     }
 
-    log.Println("CLI command executed successfully")
-
     abiJson, err := os.ReadFile("abi.json")
     if err != nil {
         log.Printf("Error reading ABI file: %v", err)
         return nil, fmt.Errorf("error reading ABI file: %v", err)
     }
 
-    log.Println("ABI file read successfully")
     return abiJson, nil
 }
+
+
 func GetBackfillHandler(w http.ResponseWriter, r *http.Request) {
     log.Println("Received request to backfill block data")
     enableCors(w)
@@ -221,12 +225,14 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
     http.ServeFile(w, r, filePath)
 }
-
 func main() {
     flag.Parse()
 
+    // Example default value for decode
+    decode := false
+
     if classHash != "" && jsonRpcUrl != "" {
-        abi, err := GetStarknetABI(classHash, jsonRpcUrl)
+        abi, err := GetStarknetABI(classHash, jsonRpcUrl, decode)
         if err != nil {
             log.Fatalf("Error fetching ABI: %v", err)
         }

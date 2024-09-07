@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 const StarknetAbiFetcher = () => {
   const [classHash, setClassHash] = useState('');
   const [jsonRpcUrl, setJsonRpcUrl] = useState('');
+  const [decode, setDecode] = useState(false); // New state for decode option
   const [abi, setAbi] = useState(null);
   const [error, setError] = useState(null);
+
   const handleFetchAbi = async () => {
     try {
       const response = await fetch('http://localhost:8080/api/abi', {
@@ -15,13 +17,14 @@ const StarknetAbiFetcher = () => {
         body: JSON.stringify({
           classHash: classHash,
           jsonRpcUrl: jsonRpcUrl,
+          decode: decode, // Include decode option in request
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}`);
       }
-  
+
       const abi = await response.json();
       setAbi(abi);
       setError(null);
@@ -30,6 +33,7 @@ const StarknetAbiFetcher = () => {
       setAbi(null);
     }
   };
+
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Fetch StarkNet ABI</h2>
@@ -61,6 +65,19 @@ const StarknetAbiFetcher = () => {
             onChange={(e) => setJsonRpcUrl(e.target.value)}
             placeholder="Enter the JSON-RPC URL"
           />
+        </div>
+
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            id="decode"
+            className="mr-2"
+            checked={decode}
+            onChange={(e) => setDecode(e.target.checked)}
+          />
+          <label htmlFor="decode" className="font-medium">
+            Decode ABI
+          </label>
         </div>
 
         <button
