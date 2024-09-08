@@ -1,4 +1,4 @@
-# ![Athena](https://github.com/BlocSoc-iitr/Athena/tree/main/athena)
+# [Athena](https://github.com/BlocSoc-iitr/Athena/tree/main/athena)
 
 Go package for interacting with starknet. It is a tool which can be used in cli for the following tasks
 
