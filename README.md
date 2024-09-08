@@ -2,8 +2,13 @@
 
 Go package for interacting with starknet. It is a tool which can be used in cli for the following tasks
 
-This is inspired from nethermind/entro but implemented in go and is faster than entro u can see the backfill time taking by both the code bases by this graph.
-We used goroutines and worker pools + we coded it in golang to make it faster.
+This is inspired from nethermind/entro but implemented in GoLang and is therefore much faster than Entro.
+Unlike entro which is limited to being a cli tool , We have implemented frontend as well for Athena(Currently limited to backfilling )
+We plan to make the frontend fully functional soon.
+
+The below graph compares the backfilling time taken by Athena and Entro .
+
+
 
 
 ![Graph](https://github.com/user-attachments/assets/f051e42b-9676-48fc-9144-ea4d36bec75b)
