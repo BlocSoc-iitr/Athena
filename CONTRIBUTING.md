@@ -33,10 +33,6 @@ Please do not:
 * **DON'T** copy paste code from other data decoder implementations without a good argument to back it up.
 * **DON'T** surprise us with big pull requests. Instead, file an issue and start a discussion so we can agree on a direction before you invest a large amount of time.
 
-## Branch Naming
-
-Please name your branch using the `kebab-case` pattern and use common sense to name it, so that its purpose remains clear. For example, if introduces a new feature that adds the allocation hint: `feature-alloc-hint`.
-
 ## Setting Up Git Hooks
 
 To ensure code quality and consistency, this project uses a custom pre-commit hook. Follow these steps to set up the pre-commit hook:
