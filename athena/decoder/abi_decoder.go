@@ -7,33 +7,15 @@ import (
 	"strings"
 )
 
-type ABIType struct {
+type InterfaceType struct {
 	Type string `json:"type"`
 	Name string `json:"name"`
-}
-
-type StructType struct {
-	ABIType
-	Members []Member `json:"members"`
-}
-
-type InterfaceType struct {
-	ABIType
 	Items []Function `json:"items"`
 }
 
-type ImplType struct {
-	ABIType
-	InterfaceName string `json:"interface_name"`
-}
-
-type EnumType struct {
-	ABIType
-	Variants []Variant `json:"variants"`
-}
-
 type EventType struct {
-	ABIType
+	Type string `json:"type"`
+	Name string `json:"name"`
 	Members []Member `json:"members"`
 }
 
@@ -46,11 +28,6 @@ type Function struct {
 }
 
 type Member struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
-type Variant struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
