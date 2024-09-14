@@ -14,7 +14,7 @@ type InterfaceType struct {
 }
 
 type EventType struct {
-	Type string `json:"type"`
+	Kind string `json:"kind"`
 	Name string `json:"name"`
 	Members []Member `json:"members"`
 }
@@ -30,6 +30,7 @@ type Function struct {
 type Member struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Kind string `json:"kind"`
 }
 
 type Output struct {
@@ -68,6 +69,9 @@ func GetParsedAbi(abi_to_decode json.RawMessage) {
 		log.Fatalf("Error unmarshalling ABI: %v", err)
 	}
 
+	// var events []string
+	// var functions []string
+
 	// Process ABI items
 	for _, item := range abi {
 		itemBytes, err := json.Marshal(item)
@@ -100,17 +104,25 @@ func GetParsedAbi(abi_to_decode json.RawMessage) {
 			var event EventType
 			if err := json.Unmarshal(itemBytes, &event); err == nil {
 				parts := strings.Split(event.Name, "::")
-				lastWord := parts[len(parts)-1]
+				eventName := parts[len(parts)-1]
 				members := []string{}
 				for _, member := range event.Members {
 					memberType := TypeToReadableName(member.Type)
 					members = append(members, fmt.Sprintf("%s: %s", member.Name, memberType))
 				}
 				membersSignature := strings.Join(members, ", ")
-				fmt.Printf("Event: %s(%s)\n", lastWord, membersSignature)
+				fmt.Printf("Event: %s(%s)\n", eventName, membersSignature)
 			}
 		default:
 			continue
 		}
 	}
 }
+
+// map[
+// 	kind:struct 
+// 	members:[map[kind:key name:owner type:core::felt252] map[kind:data name:guardian 
+//           type:core::felt252]]
+// 	name:account::argent_account::ArgentAccount::AccountCreated 
+// 	type:event
+// 	]
