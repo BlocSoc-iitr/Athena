@@ -191,18 +191,18 @@ func (e StarknetTuple) idStr() string {
 	return fmt.Sprintf("(%s)", strings.Join(members, ","))
 }
 
-type abiParameter struct {
+type AbiParameter struct {
 	Name string
 	Type StarknetType
 }
 
-func (p abiParameter) idStr() string {
+func (p AbiParameter) idStr() string {
 	return fmt.Sprintf("%s:%s", p.Name, p.Type.idStr())
 }
 
 type StarknetStruct struct {
 	Name    string
-	Members []abiParameter
+	Members []AbiParameter
 }
 
 func (s StarknetStruct) idStr() string {
