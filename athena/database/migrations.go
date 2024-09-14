@@ -4,7 +4,7 @@ import (
 	"log"
 	// "gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"github.com/DarkLord017/athena/athena/database/models"
+	"github.com/BlocSoc-iitr/Athena/athena/database/models"
 )
 
 func MigrateUp(db *gorm.DB) {
