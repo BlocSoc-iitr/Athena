@@ -26,7 +26,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case U8, U16, U32, U64, U128:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) >= 0 && decoded.Cmp(decodeTypeMaxVal) <= 0 {
@@ -37,11 +39,15 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case U256:
 		decodedLow, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodedHigh, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decodedLow.Cmp(big.NewInt(0)) < 0 || decodedLow.Cmp(decodeTypeMaxVal) > 0 {
@@ -54,7 +60,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case Bool:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		if decoded.Cmp(big.NewInt(0)) == 0 {
 			return false, nil
@@ -66,7 +74,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case Felt:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
@@ -80,7 +90,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case ContractAddress, ClassHash, StorageAddress:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
@@ -94,7 +106,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case EthAddress:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
@@ -108,7 +122,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case Bytes31:
 		decoded, err := pop(&callData)
 		if err != nil {
-			return nil, fmt.Errorf("not enough callData to decode %s", decodeType.idStr())
+			return nil, &InvalidCalldataError{
+				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
+			}
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
@@ -122,7 +138,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 	case NoneType:
 		return "", nil
 	default:
-		return nil, fmt.Errorf("unable to decode Starknet Core type: %s", decodeType)
+		return nil, &TypeDecodeError{
+			Msg: fmt.Sprintf("unable to decode Starknet Core type: %s", decodeType),
+		}
 	}
 }
 
@@ -141,7 +159,9 @@ func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, 
 		case StarknetArray:
 			arrayLen, err := pop(&callData)
 			if err != nil {
-				return nil, fmt.Errorf("not enough callData to decode array length")
+				return nil, &InvalidCalldataError{
+					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
+				}
 			}
 			for i := 0; i < int(arrayLen.Int64()); i++ {
 				decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
@@ -153,7 +173,9 @@ func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, 
 		case StarknetOption:
 			optionPresent, err := pop(&callData)
 			if err != nil {
-				return nil, fmt.Errorf("not enough callData to decode option")
+				return nil, &InvalidCalldataError{
+					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
+				}
 			}
 			if optionPresent.Cmp(big.NewInt(0)) == 0 {
 				outputData = append(outputData, nil)
@@ -167,7 +189,9 @@ func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, 
 		case StarknetEnum:
 			enumIndex, err := pop(&callData)
 			if err != nil {
-				return nil, fmt.Errorf("not enough callData to decode enum")
+				return nil, &InvalidCalldataError{
+					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
+				}
 			}
 			variantName, variantType := t.Variants[int(enumIndex.Int64())].Name, t.Variants[int(enumIndex.Int64())].Type
 			decoded, err := DecodeFromTypes([]StarknetType{variantType}, callData)
@@ -194,7 +218,9 @@ func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, 
 			}
 			outputData = append(outputData, decoded...)
 		default:
-			return nil, fmt.Errorf("unable to decode Starknet type: %s", starknet_type)
+			return nil, &TypeDecodeError{
+				Msg: fmt.Sprintf("unable to decode Starknet type: %s", starknet_type),
+			}
 		}
 	}
 
