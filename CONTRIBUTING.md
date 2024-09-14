@@ -30,7 +30,7 @@ Please do:
 
 Please do not:
 
-* **DON'T** copy paste code from other Virtual Machine implementations without a good argument to back it up.
+* **DON'T** copy paste code from other data decoder implementations without a good argument to back it up.
 * **DON'T** surprise us with big pull requests. Instead, file an issue and start a discussion so we can agree on a direction before you invest a large amount of time.
 
 ## Branch Naming
