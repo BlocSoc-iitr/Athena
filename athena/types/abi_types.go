@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"math/big"
+	"math"
 	"strings"
 )
 
@@ -91,21 +92,30 @@ func IntFromString(typeStr string) (StarknetCoreType, error) {
 	}
 }
 
-func (t StarknetCoreType) IDString() string {
-	return t.String()
-}
-
 func (t StarknetCoreType) MaxValue() (*big.Int, error) {
 	switch t {
-	case U8, U16, U32, U64, U128, U256:
-		bytes := int(t)
-		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), uint(8*bytes)), big.NewInt(1)), nil
-	case Felt, ContractAddress, ClassHash:
-		value := new(big.Int)
-		value.Exp(big.NewInt(2), big.NewInt(251), nil).
-			Add(value, new(big.Int).Mul(big.NewInt(17), new(big.Int).Exp(big.NewInt(2), big.NewInt(192), nil))).
-			Add(value, big.NewInt(1))
-		return value, nil
+	case U8:
+		return big.NewInt(math.MaxUint8), nil
+	case U16:
+		return big.NewInt(math.MaxUint16), nil
+	case U32:
+		return new(big.Int).SetUint64(math.MaxUint32), nil
+	case U64:
+		return new(big.Int).SetUint64(math.MaxUint64), nil
+	case U128:
+		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), nil
+	case U256:
+		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1)), nil
+	case Felt:
+		// Felt Prime = 2^251 + 17*2^192 + 1
+		return new(big.Int).Add(big.NewInt(1), new(big.Int).Add(new(big.Int).Mul(big.NewInt(17), new(big.Int).Lsh(big.NewInt(1), 192)), new(big.Int).Lsh(big.NewInt(1), 251))), nil
+	// TODO : Is this correct ? 
+	// case ContractAddress, ClassHash:
+	// 	value := new(big.Int)
+	// 	value.Exp(big.NewInt(2), big.NewInt(251), nil).
+	// 		Add(value, new(big.Int).Mul(big.NewInt(17), new(big.Int).Exp(big.NewInt(2), big.NewInt(192), nil))).
+	// 		Add(value, big.NewInt(1))
+	// 	return value, nil
 	case EthAddress:
 		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 160), big.NewInt(1)), nil
 	case Bytes31:
@@ -141,29 +151,18 @@ type StarknetEnum struct {
 }
 
 func (se StarknetEnum) IDStr() string {
-	return fmt.Sprintf("Option[%s]")
+	var membersStr []string
+	for _, member := range se.Variants {
+		membersStr = append(membersStr, member.VariantType.IDStr())
+	}
+	return fmt.Sprintf("Option[%s]", strings.Join(membersStr, ","))
 }
 
-// Variant represents a tuple of a variant name and type.
 type Variant struct {
 	VariantName string
 	VariantType StarknetType
 }
 
-// IDStr returns the string representation of the StarknetEnum.
-//
-//	func (se StarknetEnum) IDStr() string {
-//		var variantsStr []string
-//		var none_type StarknetCoreType = NoneType
-//		for _, variant := range se.Variants {
-//			if variant.VariantType == none_type {
-//				variantsStr = append(variantsStr, fmt.Sprintf("'%s'", variant.VariantName))
-//			} else {
-//				variantsStr = append(variantsStr, fmt.Sprintf("%s:%s", variant.VariantName, variant.VariantType.IDStr()))
-//			}
-//		}
-//		return fmt.Sprintf("Enum[%s]", strings.Join(variantsStr, ","))
-//	}
 type StarknetTuple struct {
 	Members []StarknetType
 }
