@@ -1,4 +1,4 @@
-package athenaabi
+package athena_abi
 
 import (
 	"fmt"
