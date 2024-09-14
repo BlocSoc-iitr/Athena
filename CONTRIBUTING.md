@@ -1,4 +1,4 @@
-# Contributing to the Cairo VM
+# Contributing to Athena
 
 The Blocsoc team maintains guidelines for contributing to the Blocsoc repos. Check out our [website](https://blocsoc.iitr.ac.in/) if you want to learn more about us.
 
