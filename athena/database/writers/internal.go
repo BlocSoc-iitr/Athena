@@ -2,17 +2,17 @@ package writers
 
 import (
 	"encoding/json"
+	"github.com/BlocSoc-iitr/Athena/athena/database/models"
+	"github.com/BlocSoc-iitr/Athena/athena/types"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+	"gorm.io/gorm"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"time"
-	"gorm.io/gorm"
-	"github.com/spf13/afero"
-	"github.com/sirupsen/logrus"
-	"github.com/BlocSoc-iitr/Athena/athena/database/models"
-	"github.com/BlocSoc-iitr/Athena/athena/types"
 )
 
 type Config struct {
@@ -74,7 +74,7 @@ func writeABI(abi *models.ContractABI, db *gorm.DB) {
 }
 
 // StructToMap converts a struct to a map[string]interface{} using reflection
-func StructToMap(obj interface{}) (map[string]interface{}) {
+func StructToMap(obj interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	value := reflect.ValueOf(obj)
 	typ := value.Type()
@@ -165,7 +165,6 @@ func deleteABI(abiName string, db *gorm.DB, decoderOS types.SupportedNetwork) {
 		}
 	}
 }
-
 
 func writeBlockTimestamps(timestamps []types.BlockTimestamp, network types.SupportedNetwork) {
 	appDir, err := os.UserConfigDir()

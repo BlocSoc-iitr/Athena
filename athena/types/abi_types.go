@@ -2,8 +2,8 @@ package types
 
 import (
 	"fmt"
-	"math/big"
 	"math"
+	"math/big"
 	"strings"
 )
 

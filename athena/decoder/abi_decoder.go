@@ -8,14 +8,14 @@ import (
 )
 
 type InterfaceType struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
+	Type  string     `json:"type"`
+	Name  string     `json:"name"`
 	Items []Function `json:"items"`
 }
 
 type EventType struct {
-	Kind string `json:"kind"`
-	Name string `json:"name"`
+	Kind    string   `json:"kind"`
+	Name    string   `json:"name"`
 	Members []Member `json:"members"`
 }
 
@@ -120,9 +120,9 @@ func GetParsedAbi(abi_to_decode json.RawMessage) {
 }
 
 // map[
-// 	kind:struct 
-// 	members:[map[kind:key name:owner type:core::felt252] map[kind:data name:guardian 
+// 	kind:struct
+// 	members:[map[kind:key name:owner type:core::felt252] map[kind:data name:guardian
 //           type:core::felt252]]
-// 	name:account::argent_account::ArgentAccount::AccountCreated 
+// 	name:account::argent_account::ArgentAccount::AccountCreated
 // 	type:event
 // 	]

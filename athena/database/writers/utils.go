@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
 	"reflect"
 	"strconv"
 	"strings"
-	"gorm.io/gorm"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func ModelToDict(model interface{}) map[string]interface{} {
@@ -29,7 +29,7 @@ func ModelToDict(model interface{}) map[string]interface{} {
 }
 
 // DBEncodeHex encodes data to a hex string or bytes depending on the database dialect
-func DBEncodeHex(data interface{}, dbDialect string) (interface{}) {
+func DBEncodeHex(data interface{}, dbDialect string) interface{} {
 	switch dbDialect {
 	case "mysql":
 		switch v := data.(type) {
@@ -60,7 +60,7 @@ func TraceAddressToString(traceAddress []int) string {
 }
 
 // StringToTraceAddress converts a trace address string to a slice of integers
-func StringToTraceAddress(traceAddressString string) ([]int) {
+func StringToTraceAddress(traceAddressString string) []int {
 	trimmed := strings.Trim(traceAddressString, "[]")
 	strInts := strings.Split(trimmed, ",")
 	result := make([]int, len(strInts))
@@ -82,8 +82,8 @@ type TableInfo struct {
 
 // ColumnInfo represents information about a database column
 type ColumnInfo struct {
-	Name string
-	Type string
+	Name         string
+	Type         string
 	DefaultValue string
 }
 

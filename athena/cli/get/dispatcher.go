@@ -15,8 +15,6 @@ type EventData struct {
 	Decoded         string `json:"decoded"`
 }
 
-
-
 // DecodingDispatcher is a placeholder struct to match the method signature
 type DecodingDispatcher struct{}
 

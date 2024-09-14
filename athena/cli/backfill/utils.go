@@ -1,61 +1,63 @@
 package backfill
+
 // GetCommonFlags returns a set of common flags for CLI commands.
 import (
 	"github.com/urfave/cli/v2"
 )
+
 func GetCommonFlags() []cli.Flag {
-    return []cli.Flag{
-        &cli.StringFlag{
-            Name:     "json_rpc",
-            Usage:    "JSON RPC endpoint URL",
-            Required: true,
-        },
-        &cli.StringFlag{
-            Name:     "db_url",
-            Usage:    "Database URL",
-            Required: false,
-        },
-        &cli.IntFlag{
-            Name:     "from_block",
-            Usage:    "Start block number",
-            Required: true,
-        },
-        &cli.IntFlag{
-            Name:     "to_block",
-            Usage:    "End block number",
-            Required: true,
-        },
-        &cli.StringFlag{
-            Name:     "block_file",
-            Usage:    "Path to the block file",
-            Required: false,
-        },
-        &cli.StringFlag{
-            Name:     "transaction_file",
-            Usage:    "Path to the transaction file",
-            Required: false,
-        },
-        &cli.StringFlag{
-            Name:     "event_file",
-            Usage:    "Path to the event file",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "decode_abis",
-            Usage:    "Decode ABIs",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "all_abis",
-            Usage:    "Use all ABIs",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "no_interaction",
-            Usage:    "Skip user interaction",
-            Required: false,
-        },
-    }
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "json_rpc",
+			Usage:    "JSON RPC endpoint URL",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "db_url",
+			Usage:    "Database URL",
+			Required: false,
+		},
+		&cli.IntFlag{
+			Name:     "from_block",
+			Usage:    "Start block number",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:     "to_block",
+			Usage:    "End block number",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "block_file",
+			Usage:    "Path to the block file",
+			Required: false,
+		},
+		&cli.StringFlag{
+			Name:     "transaction_file",
+			Usage:    "Path to the transaction file",
+			Required: false,
+		},
+		&cli.StringFlag{
+			Name:     "event_file",
+			Usage:    "Path to the event file",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "decode_abis",
+			Usage:    "Decode ABIs",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "all_abis",
+			Usage:    "Use all ABIs",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "no_interaction",
+			Usage:    "Skip user interaction",
+			Required: false,
+		},
+	}
 }
 func GetBackfillFlags(c *cli.Context) map[string]interface{} {
 	// Initialize a map to store the flags
@@ -99,41 +101,41 @@ func GetBackfillFlags(c *cli.Context) map[string]interface{} {
 	return flags
 }
 func GetEventFlags() []cli.Flag {
-    return []cli.Flag{
-        &cli.StringFlag{
-            Name:     "contract_address",
-            Usage:    "Contract address for event backfill",
-            Required: true,
-        },
-        &cli.StringFlag{
-            Name:     "event_name",
-            Usage:    "Name of the event",
-            Required: false,
-        },
-        &cli.IntFlag{
-            Name:     "batch_size",
-            Usage:    "Batch size for processing events",
-            Required: false,
-        },
-        &cli.StringFlag{
-            Name:     "event_file",
-            Usage:    "Path to the event file",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "decode_abis",
-            Usage:    "Decode ABIs",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "all_abis",
-            Usage:    "Use all ABIs",
-            Required: false,
-        },
-        &cli.BoolFlag{
-            Name:     "no_interaction",
-            Usage:    "Skip user interaction",
-            Required: false,
-        },
-    }
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "contract_address",
+			Usage:    "Contract address for event backfill",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "event_name",
+			Usage:    "Name of the event",
+			Required: false,
+		},
+		&cli.IntFlag{
+			Name:     "batch_size",
+			Usage:    "Batch size for processing events",
+			Required: false,
+		},
+		&cli.StringFlag{
+			Name:     "event_file",
+			Usage:    "Path to the event file",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "decode_abis",
+			Usage:    "Decode ABIs",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "all_abis",
+			Usage:    "Use all ABIs",
+			Required: false,
+		},
+		&cli.BoolFlag{
+			Name:     "no_interaction",
+			Usage:    "Skip user interaction",
+			Required: false,
+		},
+	}
 }

@@ -1,10 +1,10 @@
 package types
 
 import (
-	// "encoding/hex"
+// "encoding/hex"
 )
 
-// TODO : Check if this file is useful. 
+// TODO : Check if this file is useful.
 
 // Dataclass is a map from string key to any value
 // type Dataclass map[string]interface{}

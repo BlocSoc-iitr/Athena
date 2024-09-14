@@ -33,7 +33,8 @@ const (
 	Events       BackfillDataType = "events"
 	Traces       BackfillDataType = "traces"
 )
-//here the value stored inside the enum becomes the string 
+
+//here the value stored inside the enum becomes the string
 
 // AbstractResourceExporter is the base class for resource exporters.
 type AbstractResourceExporter struct {
@@ -41,7 +42,8 @@ type AbstractResourceExporter struct {
 	initTime       time.Time
 	resourcesSaved int
 }
-//use pointer as allow the actual value modification 
+
+// use pointer as allow the actual value modification
 func (e *AbstractResourceExporter) Init() {
 	e.initTime = time.Now()
 	e.resourcesSaved = 0
@@ -49,12 +51,12 @@ func (e *AbstractResourceExporter) Init() {
 
 func (e *AbstractResourceExporter) Close() {
 	duration := time.Since(e.initTime)
-    
-    // Convert duration to minutes and seconds
-    minutes := int(duration / time.Minute)
-    seconds := int(duration % time.Minute / time.Second)
-    
-    fmt.Printf("Exported %d rows in %d minutes and %d seconds\n", e.resourcesSaved, minutes, seconds)
+
+	// Convert duration to minutes and seconds
+	minutes := int(duration / time.Minute)
+	seconds := int(duration % time.Minute / time.Second)
+
+	fmt.Printf("Exported %d rows in %d minutes and %d seconds\n", e.resourcesSaved, minutes, seconds)
 }
 
 func (e *AbstractResourceExporter) EncodeDataclassAsDict(dataclass map[string]interface{}) map[string]interface{} {
@@ -71,7 +73,7 @@ type FileResourceExporter struct {
 	writer       *csv.Writer
 }
 
-func NewFileResourceExporter(fileName string, append bool) (*FileResourceExporter, error) {//constructor function or init funct
+func NewFileResourceExporter(fileName string, append bool) (*FileResourceExporter, error) { //constructor function or init funct
 	if !strings.HasSuffix(fileName, ".csv") {
 		return nil, errors.New("export file name must be a .csv file")
 	}
@@ -96,14 +98,14 @@ func NewFileResourceExporter(fileName string, append bool) (*FileResourceExporte
 	exporter := &FileResourceExporter{
 		fileName:     fileName,
 		writeHeaders: false,
-		csvSeparator: "|",//unless specified explicitly this will remain the default value same as in python where there is no way to explicitly define this 
+		csvSeparator: "|", //unless specified explicitly this will remain the default value same as in python where there is no way to explicitly define this
 		fileHandle:   fileHandle,
 		writer:       writer,
 	}
 	exporter.Init()
 
 	// Check if file is empty to determine if headers should be written
-	fileInfo, err := fileHandle.Stat()//has variuos methods defined on it like name , size , mode permissions and modification time etc 
+	fileInfo, err := fileHandle.Stat() //has variuos methods defined on it like name , size , mode permissions and modification time etc
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +116,7 @@ func NewFileResourceExporter(fileName string, append bool) (*FileResourceExporte
 	return exporter, nil
 }
 
-func (e *FileResourceExporter) CSVEncodeValue(val interface{}) (string, error) {//[]interface{} holds value of any type just like a list in python -->  this is only in a slice mde by using []
+func (e *FileResourceExporter) CSVEncodeValue(val interface{}) (string, error) { //[]interface{} holds value of any type just like a list in python -->  this is only in a slice mde by using []
 	switch v := val.(type) {
 	case nil:
 		return "", nil
@@ -134,9 +136,9 @@ func (e *FileResourceExporter) CSVEncodeValue(val interface{}) (string, error) {
 		return "[" + strings.Join(encodedList, ",") + "]", nil
 	case []byte:
 		return fmt.Sprintf("%x", v), nil
-	case map[string]interface{}://doesnt matter if key is string as not used in implementation 
-	//interface{} can store any value in it 
-		encodedMap, err := json.Marshal(v)//This function call converts the map v into a JSON-encoded byte slice. The json.Marshal function serializes Go values into JSON format
+	case map[string]interface{}: //doesnt matter if key is string as not used in implementation
+		//interface{} can store any value in it
+		encodedMap, err := json.Marshal(v) //This function call converts the map v into a JSON-encoded byte slice. The json.Marshal function serializes Go values into JSON format
 		if err != nil {
 			return "", err
 		}

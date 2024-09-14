@@ -1,38 +1,38 @@
 package backfill
 
-import(
-    "fmt"
-    "encoding/json"
-    "os"
-    "net/http"
-    "time"
-    "io"
-    "bytes"
-    "strconv"
-    "os/signal"
-    "syscall"
-    "log"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 )
 
 type GraceFullkiller struct {
 	killNow bool
 }
 
-type Network string 
+type Network string
 
-const(
+const (
 	Ethereum Network = "ethereum"
 	Starknet Network = "starknet"
 )
 
-type BlockIdentifier string 
+type BlockIdentifier string
 
-const(
-	latest BlockIdentifier = "latest"
-	earliest BlockIdentifier = "earliest"
-	safe BlockIdentifier = "safe"
+const (
+	latest    BlockIdentifier = "latest"
+	earliest  BlockIdentifier = "earliest"
+	safe      BlockIdentifier = "safe"
 	finalized BlockIdentifier = "finalized"
-	pending BlockIdentifier = "pending"
+	pending   BlockIdentifier = "pending"
 )
 
 func Default_rpc(network Network) (string, error) {
@@ -48,114 +48,113 @@ func Default_rpc(network Network) (string, error) {
 
 func Etherscan_base_url(network Network) (string, error) {
 	switch network {
-    case Ethereum:
-        return "https://api.etherscan.io/api", nil
-    default:
-        return "", fmt.Errorf("Network not available from etherscan")
-    }
+	case Ethereum:
+		return "https://api.etherscan.io/api", nil
+	default:
+		return "", fmt.Errorf("Network not available from etherscan")
+	}
 }
 
 func Get_current_block_number(network Network) (int, error) {
-    switch network{
-    case Starknet:
-	rpc := os.Getenv("JSON_RPC")
-    if rpc == "" {
-        rpc, _ = Default_rpc(network)
-    }
+	switch network {
+	case Starknet:
+		rpc := os.Getenv("JSON_RPC")
+		if rpc == "" {
+			rpc, _ = Default_rpc(network)
+		}
 
-    client := &http.Client{Timeout: 30 * time.Second}
-    reqBody := map[string]interface{}{
-        "id":      1,
-        "jsonrpc": "2.0",
-        "method":  "starknet_blockNumber",
-    }
-    body, err := json.Marshal(reqBody)
-    if err != nil {
-        return 0, err
-    }
+		client := &http.Client{Timeout: 30 * time.Second}
+		reqBody := map[string]interface{}{
+			"id":      1,
+			"jsonrpc": "2.0",
+			"method":  "starknet_blockNumber",
+		}
+		body, err := json.Marshal(reqBody)
+		if err != nil {
+			return 0, err
+		}
 
-    resp, err := client.Post(rpc, "application/json", io.NopCloser(bytes.NewReader(body)))
-    if err != nil {
-        return 0, err
-    }
-    defer resp.Body.Close()
+		resp, err := client.Post(rpc, "application/json", io.NopCloser(bytes.NewReader(body)))
+		if err != nil {
+			return 0, err
+		}
+		defer resp.Body.Close()
 
-    var response map[string]interface{}
-    if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-        return 0, err
-    }
+		var response map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			return 0, err
+		}
 
-    result, ok := response["result"].(float64)
-    if !ok {
-        return 0, fmt.Errorf("error fetching current block number for Starknet: %v", response)
-    }
+		result, ok := response["result"].(float64)
+		if !ok {
+			return 0, fmt.Errorf("error fetching current block number for Starknet: %v", response)
+		}
 
-    return int(result), nil
-case Ethereum:
-	rpc := os.Getenv("JSON_RPC")
-    if rpc == "" {
-        rpc, _ = Default_rpc(network)
-    }
+		return int(result), nil
+	case Ethereum:
+		rpc := os.Getenv("JSON_RPC")
+		if rpc == "" {
+			rpc, _ = Default_rpc(network)
+		}
 
-    client := &http.Client{Timeout: 30 * time.Second}
-    reqBody := map[string]interface{}{
-        "jsonrpc": "2.0",
-        "id":      0,
-        "method":  "eth_blockNumber",
-    }
-    body, err := json.Marshal(reqBody)
-    if err != nil {
-        return 0, err
-    }
+		client := &http.Client{Timeout: 30 * time.Second}
+		reqBody := map[string]interface{}{
+			"jsonrpc": "2.0",
+			"id":      0,
+			"method":  "eth_blockNumber",
+		}
+		body, err := json.Marshal(reqBody)
+		if err != nil {
+			return 0, err
+		}
 
-    resp, err := client.Post(rpc, "application/json", bytes.NewReader(body))
-    if err != nil {
-        return 0, err
-    }
-    defer resp.Body.Close()
+		resp, err := client.Post(rpc, "application/json", bytes.NewReader(body))
+		if err != nil {
+			return 0, err
+		}
+		defer resp.Body.Close()
 
-    var response map[string]interface{}
-    if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-        return 0, err
-    }
+		var response map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			return 0, err
+		}
 
-    resultHex, ok := response["result"].(string)
-    if !ok {
-        return 0, fmt.Errorf("error fetching current block number for Ethereum: %v", response)
-    }
+		resultHex, ok := response["result"].(string)
+		if !ok {
+			return 0, fmt.Errorf("error fetching current block number for Ethereum: %v", response)
+		}
 
-    blockNumber, err := strconv.ParseInt(resultHex, 16, 64)
-    if err != nil {
-        return 0, fmt.Errorf("error converting block number: %v", err)
-    }
+		blockNumber, err := strconv.ParseInt(resultHex, 16, 64)
+		if err != nil {
+			return 0, fmt.Errorf("error converting block number: %v", err)
+		}
 
-    return int(blockNumber), nil
+		return int(blockNumber), nil
 
 	default:
-		return 0 ,fmt.Errorf("Network not supported")
-    }
-
+		return 0, fmt.Errorf("Network not supported")
+	}
 
 }
 
-func Block_Identifier_To_Block(identifier BlockIdentifier, network Network)(int , error){
+func Block_Identifier_To_Block(identifier BlockIdentifier, network Network) (int, error) {
 	switch identifier {
 	case latest:
 		return Get_current_block_number(network)
 	case earliest:
 		return 0, nil
 	case safe:
-		return 0 , fmt.Errorf("not implemented")
+		return 0, fmt.Errorf("not implemented")
 	case finalized:
-		return 0 , fmt.Errorf("not implemented")
+		return 0, fmt.Errorf("not implemented")
 	case pending:
-        blockNumber, err := Get_current_block_number(network)
-        if err != nil {
-            return 0, fmt.Errorf("error in getting a block number")
-        }
+		blockNumber, err := Get_current_block_number(network)
+		if err != nil {
+			return 0, fmt.Errorf("error in getting a block number")
+		}
 		return blockNumber + 1, nil
 	default:
-		return 0 , fmt.Errorf("block Identifier not supported")
+		return 0, fmt.Errorf("block Identifier not supported")
 	}
 }
 
@@ -175,6 +174,5 @@ func New_Gracfull_Killer() *GraceFullkiller {
 }
 
 func (g *GraceFullkiller) KillNow() bool {
-    return g.killNow
+	return g.killNow
 }
-

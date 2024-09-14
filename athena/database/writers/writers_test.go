@@ -2,17 +2,17 @@ package writers
 
 import (
 	"fmt"
-	"testing"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"github.com/BlocSoc-iitr/Athena/athena/database"
 	"github.com/BlocSoc-iitr/Athena/athena/database/models"
 	"github.com/BlocSoc-iitr/Athena/athena/database/readers"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"testing"
 )
 
-//**************************/
-//****** Utils.go **********/
-//**************************/
+// **************************/
+// ****** Utils.go **********/
+// **************************/
 func TestModelToDict(t *testing.T) {
 	dsn := "root:MySQLDatabase$24@tcp(127.0.0.1:3306)/athena?charset=utf8&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -42,7 +42,7 @@ func TestModelToDict(t *testing.T) {
 	backToAddr := StringToTraceAddress(traceStr)
 	fmt.Printf("Back to trace address: %v\n", backToAddr)
 
-	tableInfo := AutomapSqlalchemyModel(db, []string{"transactions","blocks","contract_abis","blocks"}, "athena")
+	tableInfo := AutomapSqlalchemyModel(db, []string{"transactions", "blocks", "contract_abis", "blocks"}, "athena")
 	for tableName, info := range tableInfo {
 		fmt.Printf("Table: %s\n", tableName)
 		for _, column := range info.Columns {
@@ -61,16 +61,16 @@ func TestWriteAbi(t *testing.T) {
 	database.MigrateUp(db)
 
 	contractAbi1 := models.ContractABI{
-		AbiName: "transaction1",
-		AbiJson: []map[string]interface{}{},
-		Priority: 100,
+		AbiName:   "transaction1",
+		AbiJson:   []map[string]interface{}{},
+		Priority:  100,
 		DecoderOS: "cairo",
 	}
 
 	contractAbi2 := models.ContractABI{
-		AbiName: "transaction2",
-		AbiJson: []map[string]interface{}{},
-		Priority: 120,
+		AbiName:   "transaction2",
+		AbiJson:   []map[string]interface{}{},
+		Priority:  120,
 		DecoderOS: "cairo",
 	}
 

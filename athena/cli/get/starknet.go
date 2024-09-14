@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/BlocSoc-iitr/Athena/athena/decoder"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"github.com/BlocSoc-iitr/Athena/athena/decoder" 
 )
 
 // Structs for JSON-RPC requests and responses

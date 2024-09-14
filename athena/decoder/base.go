@@ -1,4 +1,5 @@
 package decoder
+
 type DecodedFuncDataclass struct {
 	ABIName string
 	Name    string
@@ -15,7 +16,7 @@ type AbiFunctionDecoder interface {
 	Signature() []byte
 	ABIName() string
 	Priority() int
-	Decode(calldata [][]byte, result [][]byte) (*DecodedFuncDataclass, error)//returned DecodedEventDataclass in golang 
+	Decode(calldata [][]byte, result [][]byte) (*DecodedFuncDataclass, error) //returned DecodedEventDataclass in golang
 	IDStr(fullSignature bool) string
 }
 type AbiEventDecoder interface {

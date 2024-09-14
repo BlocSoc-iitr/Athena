@@ -83,7 +83,7 @@ type Transaction struct {
 	ResourceBounds        map[string]int         `gorm:"column:resource_bounds;type:json"`
 	PaymasterData         []string               `gorm:"column:paymaster_data;type:json"`
 	AccountDeploymentData []string               `gorm:"column:account_deployment_data;type:json"`
-	ContractAddress 	  sql.NullString         `gorm:"column:contract_address;type:varchar(42);index"`
+	ContractAddress       sql.NullString         `gorm:"column:contract_address;type:varchar(42);index"`
 	Selector              string                 `gorm:"column:selector;type:text;not null"`
 	Calldata              []string               `gorm:"column:calldata;type:json;not null"`
 	ClassHash             sql.NullString         `gorm:"column:class_hash;type:varchar(100);index"`

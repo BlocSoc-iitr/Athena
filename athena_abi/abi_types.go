@@ -1,116 +1,116 @@
 package athenaabi
 
 import (
-    "fmt"
-    "math/big"
-    "strings"
+	"fmt"
+	"math/big"
+	"strings"
 )
 
 type StarknetType interface {
-    idStr() string
+	idStr() string
 }
 
 type abiMemberType string
 
 const (
-    Function   abiMemberType = "function"
-    L1Handler  abiMemberType = "l1Handler"
-    AbiStruct     abiMemberType = "struct"
-    Constructor abiMemberType = "constructor"
-    Event      abiMemberType = "event"
-    Interface  abiMemberType = "interface"
-    Impl       abiMemberType = "impl"
-    TypeDef    abiMemberType = "typeDef" // Internal Definition: typeDef = Union[struct, enum]
+	Function    abiMemberType = "function"
+	L1Handler   abiMemberType = "l1Handler"
+	AbiStruct   abiMemberType = "struct"
+	Constructor abiMemberType = "constructor"
+	Event       abiMemberType = "event"
+	Interface   abiMemberType = "interface"
+	Impl        abiMemberType = "impl"
+	TypeDef     abiMemberType = "typeDef" // Internal Definition: typeDef = Union[struct, enum]
 )
 
 type starknetAbiEventKind string
 
 const (
-    Enum   starknetAbiEventKind = "enum"
-    Struct starknetAbiEventKind = "struct"
-    Data   starknetAbiEventKind = "data"
-    Nested starknetAbiEventKind = "nested"
-    Key    starknetAbiEventKind = "key"
-    Flat   starknetAbiEventKind = "flat"
+	Enum   starknetAbiEventKind = "enum"
+	Struct starknetAbiEventKind = "struct"
+	Data   starknetAbiEventKind = "data"
+	Nested starknetAbiEventKind = "nested"
+	Key    starknetAbiEventKind = "key"
+	Flat   starknetAbiEventKind = "flat"
 )
 
 type starknetCoreType int
 
 const (
-    U8             starknetCoreType = 1
-    U16            starknetCoreType = 2
-    U32            starknetCoreType = 4
-    U64            starknetCoreType = 8
-    U128           starknetCoreType = 16
-    U256           starknetCoreType = 32
+	U8   starknetCoreType = 1
+	U16  starknetCoreType = 2
+	U32  starknetCoreType = 4
+	U64  starknetCoreType = 8
+	U128 starknetCoreType = 16
+	U256 starknetCoreType = 32
 	// Random Enum values for the rest
-    Bool           starknetCoreType = 3
-    Felt           starknetCoreType = 5
-    ContractAddress starknetCoreType = 6
-    EthAddress     starknetCoreType = 7
-    ClassHash      starknetCoreType = 9
-    StorageAddress starknetCoreType = 10
-    Bytes31        starknetCoreType = 11
-    NoneType       starknetCoreType = 12
+	Bool            starknetCoreType = 3
+	Felt            starknetCoreType = 5
+	ContractAddress starknetCoreType = 6
+	EthAddress      starknetCoreType = 7
+	ClassHash       starknetCoreType = 9
+	StorageAddress  starknetCoreType = 10
+	Bytes31         starknetCoreType = 11
+	NoneType        starknetCoreType = 12
 )
 
 func (t starknetCoreType) String() string {
-    switch t {
-    case U8:
-        return "U8"
-    case U16:
-        return "U16"
-    case U32:
-        return "U32"
-    case U64:
-        return "U64"
-    case U128:
-        return "U128"
-    case U256:
-        return "U256"
-    case Bool:
-        return "Bool"
-    case Felt:
-        return "Felt"
-    case ContractAddress:
-        return "ContractAddress"
-    case EthAddress:
-        return "EthAddress"
-    case ClassHash:
-        return "ClassHash"
-    case StorageAddress:
-        return "StorageAddress"
-    case Bytes31:
-        return "Bytes31"
-    case NoneType:
-        return "NoneType"
-    default:
-        return "Unknown"
-    }
+	switch t {
+	case U8:
+		return "U8"
+	case U16:
+		return "U16"
+	case U32:
+		return "U32"
+	case U64:
+		return "U64"
+	case U128:
+		return "U128"
+	case U256:
+		return "U256"
+	case Bool:
+		return "Bool"
+	case Felt:
+		return "Felt"
+	case ContractAddress:
+		return "ContractAddress"
+	case EthAddress:
+		return "EthAddress"
+	case ClassHash:
+		return "ClassHash"
+	case StorageAddress:
+		return "StorageAddress"
+	case Bytes31:
+		return "Bytes31"
+	case NoneType:
+		return "NoneType"
+	default:
+		return "Unknown"
+	}
 }
 
 // intFromString converts a string like 'u16' to the corresponding starknetCoreType
 func intFromString(typeStr string) (starknetCoreType, error) {
-    switch strings.ToLower(typeStr) {
-    case "u8":
-        return U8, nil
-    case "u16":
-        return U16, nil
-    case "u32":
-        return U32, nil
-    case "u64":
-        return U64, nil
-    case "u128":
-        return U128, nil
-    case "u256":
-        return U256, nil
-    default:
-        return 0, fmt.Errorf("invalid integer type: %s", typeStr)
-    }
+	switch strings.ToLower(typeStr) {
+	case "u8":
+		return U8, nil
+	case "u16":
+		return U16, nil
+	case "u32":
+		return U32, nil
+	case "u64":
+		return U64, nil
+	case "u128":
+		return U128, nil
+	case "u256":
+		return U256, nil
+	default:
+		return 0, fmt.Errorf("invalid integer type: %s", typeStr)
+	}
 }
 
 func (t starknetCoreType) idStr() string {
-    return t.String()
+	return t.String()
 }
 
 // maxValue returns the maximum value for the corresponding starknetCoreType
@@ -157,26 +157,26 @@ func (t starknetNonZero) idStr() string {
 }
 
 type starknetEnum struct {
-    Name     string
-    Variants []struct {
-        Name  string
-        Type  StarknetType
-    }
+	Name     string
+	Variants []struct {
+		Name string
+		Type StarknetType
+	}
 }
 
 // idStr returns the string representation of the enum in the format "Enum[variant-name:variant-type,...]"
 func (e starknetEnum) idStr() string {
-    var variants []string
-    for _, variant := range e.Variants {
-        var variantStr string
-        if variant.Type.idStr() == "NoneType" {
-            variantStr = variant.Name
-        } else {
-            variantStr = fmt.Sprintf("%s:%s", variant.Name, variant.Type.idStr())
-        }
-        variants = append(variants, variantStr)
-    }
-    return fmt.Sprintf("Enum[%s]", strings.Join(variants, ","))
+	var variants []string
+	for _, variant := range e.Variants {
+		var variantStr string
+		if variant.Type.idStr() == "NoneType" {
+			variantStr = variant.Name
+		} else {
+			variantStr = fmt.Sprintf("%s:%s", variant.Name, variant.Type.idStr())
+		}
+		variants = append(variants, variantStr)
+	}
+	return fmt.Sprintf("Enum[%s]", strings.Join(variants, ","))
 }
 
 type starknetTuple struct {
