@@ -106,16 +106,10 @@ func (t StarknetCoreType) MaxValue() (*big.Int, error) {
 		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), nil
 	case U256:
 		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1)), nil
-	case Felt:
+	case Felt, ContractAddress, ClassHash:
 		// Felt Prime = 2^251 + 17*2^192 + 1
+		// ContractAddress is computed by the pedersen hash function and ClassHash is computed by the posiedon hash function, both of which are taken modulo Felt Prime.
 		return new(big.Int).Add(big.NewInt(1), new(big.Int).Add(new(big.Int).Mul(big.NewInt(17), new(big.Int).Lsh(big.NewInt(1), 192)), new(big.Int).Lsh(big.NewInt(1), 251))), nil
-	// TODO : Is this correct ? 
-	// case ContractAddress, ClassHash:
-	// 	value := new(big.Int)
-	// 	value.Exp(big.NewInt(2), big.NewInt(251), nil).
-	// 		Add(value, new(big.Int).Mul(big.NewInt(17), new(big.Int).Exp(big.NewInt(2), big.NewInt(192), nil))).
-	// 		Add(value, big.NewInt(1))
-	// 	return value, nil
 	case EthAddress:
 		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 160), big.NewInt(1)), nil
 	case Bytes31:
