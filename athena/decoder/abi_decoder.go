@@ -79,22 +79,16 @@ func TypeToReadableName(typ string) string {
 	return typ
 }
 
-func GetParsedAbi(abi_to_decode string) {
-	// Check if the input ABI is a valid JSON array
+func GetParsedAbi(abi_to_decode json.RawMessage) {
 	var abi []map[string]interface{}
-	err := json.Unmarshal([]byte(abi_to_decode), &abi)
-	if err != nil {
-		// If ABI is a string, unmarshal it as a string and try again
-		var abiString string
-		if err = json.Unmarshal([]byte(abi_to_decode), &abiString); err == nil {
-			// Attempt to parse the string as JSON array
-			err = json.Unmarshal([]byte(abiString), &abi)
-			if err != nil {
-				log.Fatalf("Error parsing ABI string: %v", err)
-			}
-		} else {
-			log.Fatalf("Error unmarshalling ABI: %v", err)
+	var abiString string
+	if err := json.Unmarshal(abi_to_decode, &abiString); err == nil {
+		err = json.Unmarshal([]byte(abiString), &abi)
+		if err != nil {
+			log.Fatalf("Error parsing ABI string: %v", err)
 		}
+	} else {
+		log.Fatalf("Error unmarshalling ABI: %v", err)
 	}
 
 	// Process ABI items

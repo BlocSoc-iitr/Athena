@@ -110,11 +110,8 @@ func main() {
 	}
 
 	if *decode {
-		// Convert ABI to a string for decoding
-		abiString := string(abi)
-		decoder.GetParsedAbi(abiString) // Call the decoder function to parse and display ABI
+		decoder.GetParsedAbi(abi)
 	} else {
-		// Convert ABI to JSON with indentation
 		abiJson, err := json.MarshalIndent(abi, "", "  ")
 		if err != nil {
 			log.Fatalf("Error serializing ABI: %v", err)
