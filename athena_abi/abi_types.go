@@ -10,51 +10,51 @@ type StarknetType interface {
 	idStr() string
 }
 
-type abiMemberType string
+type AbiMemberType string
 
 const (
-	Function    abiMemberType = "function"
-	L1Handler   abiMemberType = "l1Handler"
-	AbiStruct   abiMemberType = "struct"
-	Constructor abiMemberType = "constructor"
-	Event       abiMemberType = "event"
-	Interface   abiMemberType = "interface"
-	Impl        abiMemberType = "impl"
-	TypeDef     abiMemberType = "typeDef" // Internal Definition: typeDef = Union[struct, enum]
+	Function    AbiMemberType = "function"
+	L1Handler   AbiMemberType = "l1Handler"
+	AbiStruct   AbiMemberType = "struct"
+	Constructor AbiMemberType = "constructor"
+	Event       AbiMemberType = "event"
+	Interface   AbiMemberType = "interface"
+	Impl        AbiMemberType = "impl"
+	TypeDef     AbiMemberType = "typeDef" // Internal Definition: typeDef = Union[struct, enum]
 )
 
-type starknetAbiEventKind string
+type StarknetAbiEventKind string
 
 const (
-	Enum   starknetAbiEventKind = "enum"
-	Struct starknetAbiEventKind = "struct"
-	Data   starknetAbiEventKind = "data"
-	Nested starknetAbiEventKind = "nested"
-	Key    starknetAbiEventKind = "key"
-	Flat   starknetAbiEventKind = "flat"
+	Enum   StarknetAbiEventKind = "enum"
+	Struct StarknetAbiEventKind = "struct"
+	Data   StarknetAbiEventKind = "data"
+	Nested StarknetAbiEventKind = "nested"
+	Key    StarknetAbiEventKind = "key"
+	Flat   StarknetAbiEventKind = "flat"
 )
 
-type starknetCoreType int
+type StarknetCoreType int
 
 const (
-	U8   starknetCoreType = 1
-	U16  starknetCoreType = 2
-	U32  starknetCoreType = 4
-	U64  starknetCoreType = 8
-	U128 starknetCoreType = 16
-	U256 starknetCoreType = 32
+	U8   StarknetCoreType = 1
+	U16  StarknetCoreType = 2
+	U32  StarknetCoreType = 4
+	U64  StarknetCoreType = 8
+	U128 StarknetCoreType = 16
+	U256 StarknetCoreType = 32
 	// Random Enum values for the rest
-	Bool            starknetCoreType = 3
-	Felt            starknetCoreType = 5
-	ContractAddress starknetCoreType = 6
-	EthAddress      starknetCoreType = 7
-	ClassHash       starknetCoreType = 9
-	StorageAddress  starknetCoreType = 10
-	Bytes31         starknetCoreType = 11
-	NoneType        starknetCoreType = 12
+	Bool            StarknetCoreType = 3
+	Felt            StarknetCoreType = 5
+	ContractAddress StarknetCoreType = 6
+	EthAddress      StarknetCoreType = 7
+	ClassHash       StarknetCoreType = 9
+	StorageAddress  StarknetCoreType = 10
+	Bytes31         StarknetCoreType = 11
+	NoneType        StarknetCoreType = 12
 )
 
-func (t starknetCoreType) String() string {
+func (t StarknetCoreType) String() string {
 	switch t {
 	case U8:
 		return "U8"
@@ -89,8 +89,8 @@ func (t starknetCoreType) String() string {
 	}
 }
 
-// intFromString converts a string like 'u16' to the corresponding starknetCoreType
-func intFromString(typeStr string) (starknetCoreType, error) {
+// intFromString converts a string like 'u16' to the corresponding StarknetCoreType
+func intFromString(typeStr string) (StarknetCoreType, error) {
 	switch strings.ToLower(typeStr) {
 	case "u8":
 		return U8, nil
@@ -109,12 +109,12 @@ func intFromString(typeStr string) (starknetCoreType, error) {
 	}
 }
 
-func (t starknetCoreType) idStr() string {
+func (t StarknetCoreType) idStr() string {
 	return t.String()
 }
 
-// maxValue returns the maximum value for the corresponding starknetCoreType
-func (t starknetCoreType) maxValue() (*big.Int, error) {
+// maxValue returns the maximum value for the corresponding StarknetCoreType
+func (t StarknetCoreType) maxValue() (*big.Int, error) {
 	switch t {
 	case U8, U16, U32, U64, U128, U256:
 		return new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), uint(8*t)), big.NewInt(1)), nil
@@ -132,31 +132,31 @@ func (t starknetCoreType) maxValue() (*big.Int, error) {
 }
 
 // Dataclass representing a Starknet ABI Array. Both core::array::Array and core::array::Span are mapped to this dataclass since their ABI Encoding & Decoding are identical
-type starknetArray struct {
+type StarknetArray struct {
 	InnerType StarknetType
 }
 
-func (t starknetArray) idStr() string {
+func (t StarknetArray) idStr() string {
 	return fmt.Sprintf("[%s]", t.InnerType.idStr())
 }
 
-type starknetOption struct {
+type StarknetOption struct {
 	InnerType StarknetType
 }
 
-func (t starknetOption) idStr() string {
+func (t StarknetOption) idStr() string {
 	return fmt.Sprintf("Option[%s]", t.InnerType.idStr())
 }
 
-type starknetNonZero struct {
+type StarknetNonZero struct {
 	InnerType StarknetType
 }
 
-func (t starknetNonZero) idStr() string {
+func (t StarknetNonZero) idStr() string {
 	return fmt.Sprintf("NonZero[%s]", t.InnerType.idStr())
 }
 
-type starknetEnum struct {
+type StarknetEnum struct {
 	Name     string
 	Variants []struct {
 		Name string
@@ -165,7 +165,7 @@ type starknetEnum struct {
 }
 
 // idStr returns the string representation of the enum in the format "Enum[variant-name:variant-type,...]"
-func (e starknetEnum) idStr() string {
+func (e StarknetEnum) idStr() string {
 	var variants []string
 	for _, variant := range e.Variants {
 		var variantStr string
@@ -179,11 +179,11 @@ func (e starknetEnum) idStr() string {
 	return fmt.Sprintf("Enum[%s]", strings.Join(variants, ","))
 }
 
-type starknetTuple struct {
+type StarknetTuple struct {
 	Members []StarknetType
 }
 
-func (e starknetTuple) idStr() string {
+func (e StarknetTuple) idStr() string {
 	var members []string
 	for _, member := range e.Members {
 		members = append(members, member.idStr())
@@ -200,12 +200,12 @@ func (p abiParameter) idStr() string {
 	return fmt.Sprintf("%s:%s", p.Name, p.Type.idStr())
 }
 
-type starknetStruct struct {
+type StarknetStruct struct {
 	Name    string
 	Members []abiParameter
 }
 
-func (s starknetStruct) idStr() string {
+func (s StarknetStruct) idStr() string {
 	var members []string
 	for _, member := range s.Members {
 		members = append(members, fmt.Sprintf("%s:%s", member.Name, member.Type.idStr()))
