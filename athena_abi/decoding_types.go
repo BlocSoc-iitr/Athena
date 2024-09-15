@@ -66,12 +66,12 @@ func (af *AbiFunction) idStr() string {
 
 // decode the calldata and result of a function
 // result can either be nil or []big.Int
-func (af *AbiFunction) Decode(callData []big.Int, result interface{}) (*DecodedFunction, error) {
-	callDataCopy := make([]big.Int, len(callData))
+func (af *AbiFunction) Decode(callData []*big.Int, result interface{}) (*DecodedFunction, error) {
+	callDataCopy := make([]*big.Int, len(callData))
 
 	copy(callDataCopy, callData)
 
-	decodedInputs, err := DecodeFromParams(af.inputs, callDataCopy)
+	decodedInputs, err := DecodeFromParams(af.inputs, &callDataCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +79,9 @@ func (af *AbiFunction) Decode(callData []big.Int, result interface{}) (*DecodedF
 	var decodedOutputs []interface{}
 
 	if result != nil {
-		resultCopy := make([]big.Int, len(result.([]big.Int)))
-		copy(resultCopy, result.([]big.Int))
-		decodedOutputs, err = DecodeFromTypes(af.outputs, resultCopy)
+		resultCopy := make([]*big.Int, len(result.([]*big.Int)))
+		copy(resultCopy, result.([]*big.Int))
+		decodedOutputs, err = DecodeFromTypes(af.outputs, &resultCopy)
 		if err != nil {
 			return nil, err
 		}
@@ -137,22 +137,22 @@ func (ae AbiEvent) idStr() (string, error) {
 	return "Event(" + eventParamsString + ")", nil
 }
 
-func (ae AbiEvent) Decode(data []big.Int, keys []big.Int) (*DecodedEvent, error) {
-	dataCopy := make([]big.Int, len(data))
+func (ae AbiEvent) Decode(data []*big.Int, keys []*big.Int) (*DecodedEvent, error) {
+	dataCopy := make([]*big.Int, len(data))
 	copy(dataCopy, data)
-	keyCopy := make([]big.Int, len(keys)-1)
+	keyCopy := make([]*big.Int, len(keys)-1)
 	copy(keyCopy, keys[1:])
 	decodedData := map[string]interface{}{}
 
 	for _, param := range ae.parameters {
 		if value, exists := ae.data[param]; exists {
-			result, err := DecodeFromTypes([]StarknetType{value}, dataCopy)
+			result, err := DecodeFromTypes([]StarknetType{value}, &dataCopy)
 			if err != nil {
 				return nil, err
 			}
 			decodedData[param] = result[0]
 		} else if value, exists := ae.keys[param]; exists {
-			result, err := DecodeFromTypes([]StarknetType{value}, keyCopy)
+			result, err := DecodeFromTypes([]StarknetType{value}, &keyCopy)
 			if err != nil {
 				return nil, err
 			}

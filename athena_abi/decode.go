@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func pop(nums *[]big.Int) (big.Int, error) {
+func pop(nums *[]*big.Int) (*big.Int, error) {
 	if len(*nums) == 0 {
-		return *big.NewInt(-1), fmt.Errorf("cannot pop from an empty slice")
+		return big.NewInt(-1), fmt.Errorf("cannot pop from an empty slice")
 	}
 
 	lastElement := (*nums)[0]
@@ -21,10 +21,10 @@ func pop(nums *[]big.Int) (big.Int, error) {
 // to a calldata array and returns either a string, an int or a bool(hence we have taken return type as an interface).
 // When decoding, calldata is popped off the top of the calldata array. This reference to the calldata array is
 // recursively passed between type decoders, so this array is modified during decoding.
-func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface{}, error) {
+func DecodeCoreTypes(decodeType StarknetCoreType, callData *[]*big.Int) (interface{}, error) {
 	switch decodeType {
 	case U8, U16, U32, U64, U128:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -34,16 +34,16 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		if decoded.Cmp(big.NewInt(0)) >= 0 && decoded.Cmp(decodeTypeMaxVal) <= 0 {
 			return decoded, nil
 		} else {
-			return nil, fmt.Errorf("%s exceeds %s Max Range", &decoded, decodeType.idStr())
+			return nil, fmt.Errorf("%s exceeds %s Max Range", decoded, decodeType.idStr())
 		}
 	case U256:
-		decodedLow, err := pop(&callData)
+		decodedLow, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
 			}
 		}
-		decodedHigh, err := pop(&callData)
+		decodedHigh, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -56,9 +56,9 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		if decodedHigh.Cmp(big.NewInt(0)) < 0 || decodedHigh.Cmp(decodeTypeMaxVal) > 0 {
 			return nil, fmt.Errorf("high Exceeds U128 range")
 		}
-		return new(big.Int).Add(&decodedLow, new(big.Int).Lsh(&decodedHigh, 128)), nil
+		return new(big.Int).Add(decodedLow, new(big.Int).Lsh(decodedHigh, 128)), nil
 	case Bool:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -72,7 +72,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 			return nil, fmt.Errorf("invalid Bool Value")
 		}
 	case Felt:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -80,7 +80,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
-			return nil, fmt.Errorf("%s larger than Felt", &decoded)
+			return nil, fmt.Errorf("%s larger than Felt", decoded)
 		}
 		decodedHexStr := decoded.Text(16)
 		if len(decodedHexStr)%2 != 0 {
@@ -88,7 +88,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		return "0x" + decodedHexStr, nil
 	case ContractAddress, ClassHash, StorageAddress:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -96,7 +96,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
-			return nil, fmt.Errorf("%s larger than Felt Address", &decoded)
+			return nil, fmt.Errorf("%s larger than Felt Address", decoded)
 		}
 		decodedHexStr := decoded.Text(16)
 		if len(decodedHexStr) < 64 {
@@ -104,7 +104,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		return "0x" + decodedHexStr, nil
 	case EthAddress:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -112,7 +112,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
-			return nil, fmt.Errorf("%s larger than Felt Address", &decoded)
+			return nil, fmt.Errorf("%s larger than Felt Address", decoded)
 		}
 		decodedHexStr := decoded.Text(16)
 		if len(decodedHexStr) < 40 {
@@ -120,7 +120,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		return "0x" + decodedHexStr, nil
 	case Bytes31:
-		decoded, err := pop(&callData)
+		decoded, err := pop(callData)
 		if err != nil {
 			return nil, &InvalidCalldataError{
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
@@ -128,7 +128,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 		}
 		decodeTypeMaxVal, _ := decodeType.maxValue()
 		if decoded.Cmp(big.NewInt(0)) < 0 || decoded.Cmp(decodeTypeMaxVal) > 0 {
-			return nil, fmt.Errorf("%s larger than Felt Address", &decoded)
+			return nil, fmt.Errorf("%s larger than Felt Address", decoded)
 		}
 		decodedHexStr := decoded.Text(16)
 		if len(decodedHexStr) < 62 {
@@ -145,7 +145,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface
 }
 
 // Decodes calldata array using a list of StarknetTypes.
-func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, error) {
+func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{}, error) {
 	var outputData []interface{}
 
 	for _, starknet_type := range types {
@@ -157,7 +157,7 @@ func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, e
 			}
 			outputData = append(outputData, decoded)
 		case StarknetArray:
-			arrayLen, err := pop(&callData)
+			arrayLen, err := pop(callData)
 			if err != nil {
 				return nil, &InvalidCalldataError{
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
@@ -171,7 +171,7 @@ func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, e
 				outputData = append(outputData, decoded...)
 			}
 		case StarknetOption:
-			optionPresent, err := pop(&callData)
+			optionPresent, err := pop(callData)
 			if err != nil {
 				return nil, &InvalidCalldataError{
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
@@ -187,7 +187,7 @@ func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, e
 				outputData = append(outputData, decoded...)
 			}
 		case StarknetEnum:
-			enumIndex, err := pop(&callData)
+			enumIndex, err := pop(callData)
 			if err != nil {
 				return nil, &InvalidCalldataError{
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
@@ -228,7 +228,7 @@ func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, e
 }
 
 // Decodes Calldata using AbiParameters, which have names and types
-func DecodeFromParams(params []AbiParameter, callData []big.Int) (map[string]interface{}, error) {
+func DecodeFromParams(params []AbiParameter, callData *[]*big.Int) (map[string]interface{}, error) {
 	var parameterNames []string
 	var parameterTypes []StarknetType
 
