@@ -25,28 +25,28 @@ type DecodedEvent struct {
 type AbiFunction struct {
 	name      string
 	abiName   string
-	signature string
+	signature []byte
 	inputs    []AbiParameter
 	outputs   []StarknetType
 }
 
 func NewAbiFunction(name string, inputs []AbiParameter, outputs []StarknetType, abiName string) *AbiFunction {
-	var temp *AbiFunction
-	temp = &AbiFunction{
-		name:    name,
-		abiName: abiName,
-		inputs:  inputs,
-		outputs: outputs,
+	return &AbiFunction{
+		name:      name,
+		abiName:   abiName,
+		inputs:    inputs,
+		outputs:   outputs,
+		signature: StarknetKeccak([]byte(name)),
 	}
-	return temp
-	// TODO: Write correct implementation for this
-	// temp.signature = string(StarknetKeccak(bytes(temp.Encode())))
 }
 
-// TODO: Implement Encode
-// func (af *AbiFunction) Encode(inputs map[string]interface{}) []big.Int {
-// 	return EncodeFromParams(af.inputs, inputs)
-// }
+func (af *AbiFunction) Encode(inputs map[string]interface{}) []*big.Int {
+	res, err := EncodeFromParams(af.inputs, inputs)
+	if err != nil {
+		return nil
+	}
+	return res
+}
 
 func (af *AbiFunction) idStr() string {
 	inputStr := ""
@@ -114,8 +114,7 @@ func NewAbiEvent(name string, parameters []string, data map[string]StarknetType,
 		data:       data,
 		abiName:    abiName.(string),
 		keys:       keys.(map[string]StarknetType),
-		// TODO : complete signature definition
-		// signature: StarknetKeccak(Encode(name)),
+		signature:  StarknetKeccak([]byte(name)),
 	}
 }
 
