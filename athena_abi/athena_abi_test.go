@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-/*tests for athena_abi */
-
 // TestIntFromString tests the intFromString function for StarknetCoreType.
 func TestIntFromString(t *testing.T) {
 	tests := []struct {
