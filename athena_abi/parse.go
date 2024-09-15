@@ -202,7 +202,7 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 	}
 
 	if strings.HasPrefix(abiType, "(") {
-		return parseTuple(abiType, customTypes), nil
+		//	return parseTuple(abiType, customTypes), nil
 	}
 
 	parts := strings.Split(abiType, "::")[1:]
