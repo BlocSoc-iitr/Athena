@@ -45,7 +45,7 @@ func TestBigIntToBytes(t *testing.T) {
 	t.Run("Large Integer", func(t *testing.T) {
 		largeInt := big.NewInt(0).Lsh(big.NewInt(1), 64) // 2^64
 		result := bigIntToBytes(*largeInt, 9)
-		expected := []byte{0x01, 0, 0, 0, 0, 0, 0, 0, 0} // 2^64 in 8 bytes
+		expected := []byte{0x01, 0, 0, 0, 0, 0, 0, 0, 0} // 2^64 in 9 bytes
 		assert.Equal(t, expected, result)
 	})
 
@@ -77,7 +77,7 @@ func TestStarknetKeccak(t *testing.T) {
 	t.Run("Large Input", func(t *testing.T) {
 		largeInput := make([]byte, 1024) // 1 KB of data
 		result := StarknetKeccak(largeInput)
-		expected := StarknetKeccak(largeInput) // Calculate this in advance if known or check with hashing tool
+		expected := []byte{0x1, 0xd4, 0xd1, 0xdf, 0x10, 0x38, 0x8b, 0xbc, 0x20, 0x87, 0x78, 0xff, 0x2, 0x31, 0xd, 0xb9, 0x8f, 0xda, 0xa6, 0x8e, 0xfe, 0xd0, 0xb2, 0x6, 0x8a, 0x9b, 0xef, 0x78, 0xbd, 0x3b, 0xfd, 0x74} // Calculate this in advance if known or check with hashing tool
 		assert.Equal(t, expected, result)
 	})
 }
