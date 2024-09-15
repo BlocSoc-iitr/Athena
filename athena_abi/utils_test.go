@@ -7,14 +7,13 @@ import (
 )
 
 func TestBigIntToBytes(t *testing.T) {
-	// Normal logic tests
 	tests := []struct {
 		input    big.Int
 		length   int
 		expected []byte
 	}{
-		{*big.NewInt(12345), 4, []byte{0, 0, 48, 57}},                          // 12345 in 4 bytes
-		{*big.NewInt(0x123456), 6, []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x00}}, // 0x123456 in 6 bytes
+		{*big.NewInt(12345), 4, []byte{0, 0, 48, 57}},                          
+		{*big.NewInt(0x123456), 6, []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x00}}, 
 	}
 
 	t.Run("Normal Case - First Item", func(t *testing.T) {
@@ -25,7 +24,7 @@ func TestBigIntToBytes(t *testing.T) {
 
 	t.Run("Pass Case - Second Item with NotEqual", func(t *testing.T) {
 		tt := tests[1]
-		incorrectExpected := []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x01} // Incorrect last byte
+		incorrectExpected := []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x01}
 		result := bigIntToBytes(tt.input, tt.length)
 		// Verify that the result is not equal to the incorrect expected value
 		assert.NotEqual(t, incorrectExpected, result)
@@ -70,14 +69,14 @@ func TestStarknetKeccak(t *testing.T) {
 	// Boundary cases
 	t.Run("Empty Input", func(t *testing.T) {
 		result := StarknetKeccak([]byte{})
-		expected := []byte{0x1, 0xd2, 0x46, 0x1, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x3, 0xc0, 0xe5, 0x0, 0xb6, 0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x4, 0x5d, 0x85, 0xa4, 0x70} // Calculate this in advance if known or check with hashing tool
+		expected := []byte{0x1, 0xd2, 0x46, 0x1, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x3, 0xc0, 0xe5, 0x0, 0xb6, 0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x4, 0x5d, 0x85, 0xa4, 0x70}
 		assert.Equal(t, expected, result)
 	})
 
 	t.Run("Large Input", func(t *testing.T) {
-		largeInput := make([]byte, 1024) // 1 KB of data
+		largeInput := make([]byte, 1024)
 		result := StarknetKeccak(largeInput)
-		expected := StarknetKeccak(largeInput) // Calculate this in advance if known or check with hashing tool
+		expected := StarknetKeccak(largeInput)
 		assert.Equal(t, expected, result)
 	})
 }
