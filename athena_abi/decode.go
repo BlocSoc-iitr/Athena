@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-func pop(nums *[]*big.Int) (big.Int, error) {
+func pop(nums *[]big.Int) (big.Int, error) {
 	if len(*nums) == 0 {
 		return *big.NewInt(-1), fmt.Errorf("cannot pop from an empty slice")
 	}
 
-	lastElement := *(*nums)[0]
+	lastElement := (*nums)[0]
 	*nums = (*nums)[1:]
 
 	return lastElement, nil
@@ -21,7 +21,7 @@ func pop(nums *[]*big.Int) (big.Int, error) {
 // to a calldata array and returns either a string, an int or a bool(hence we have taken return type as an interface).
 // When decoding, calldata is popped off the top of the calldata array. This reference to the calldata array is
 // recursively passed between type decoders, so this array is modified during decoding.
-func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interface{}, error) {
+func DecodeCoreTypes(decodeType StarknetCoreType, callData []big.Int) (interface{}, error) {
 	switch decodeType {
 	case U8, U16, U32, U64, U128:
 		decoded, err := pop(&callData)
@@ -145,7 +145,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData []*big.Int) (interfac
 }
 
 // Decodes calldata array using a list of StarknetTypes.
-func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, error) {
+func DecodeFromTypes(types []StarknetType, callData []big.Int) ([]interface{}, error) {
 	var outputData []interface{}
 
 	for _, starknet_type := range types {
@@ -228,7 +228,7 @@ func DecodeFromTypes(types []StarknetType, callData []*big.Int) ([]interface{}, 
 }
 
 // Decodes Calldata using AbiParameters, which have names and types
-func DecodeFromParams(params []AbiParameter, callData []*big.Int) (map[string]interface{}, error) {
+func DecodeFromParams(params []AbiParameter, callData []big.Int) (map[string]interface{}, error) {
 	var parameterNames []string
 	var parameterTypes []StarknetType
 
