@@ -11,7 +11,7 @@ func GetEnumIndex(enumType StarknetEnum, enumKey string) (int, StarknetType, err
 			return idx, variant.Type, nil
 		}
 	}
-	return 0, nil, &InvalidAbiError{Msg: fmt.Sprintf("enum key %s not found in enum %s", enumKey, enumType.Name)}
+	return 0, nil, fmt.Errorf("enum key %s not found in enum %s", enumKey, enumType.Name)
 }
 
 func EncodeCoreType(encodeType StarknetCoreType, value interface{}) ([]*big.Int, error) {
@@ -19,8 +19,6 @@ func EncodeCoreType(encodeType StarknetCoreType, value interface{}) ([]*big.Int,
 	case U8, U16, U32, U64, U128, U256:
 		var bigIntValue *big.Int
 		switch v := value.(type) {
-		case int64:
-			bigIntValue = big.NewInt(v)
 		case *big.Int:
 			bigIntValue = v
 		default:
@@ -60,8 +58,6 @@ func EncodeCoreType(encodeType StarknetCoreType, value interface{}) ([]*big.Int,
 			} else {
 				return nil, &TypeEncodeError{Msg: fmt.Sprintf("hex strings must be 0x prefixed: %s", v)}
 			}
-		case int64:
-			intEncoded = big.NewInt(v)
 		case *big.Int:
 			intEncoded = v
 		case []byte:
@@ -149,6 +145,7 @@ func EncodeFromTypes(types []StarknetType, values []interface{}) ([]*big.Int, er
 			for k, v := range enumValue {
 				enumKey = k
 				enumValueInner = v
+				break
 			}
 			enumIndex, enumType, err := GetEnumIndex(t, enumKey)
 			if err != nil {
