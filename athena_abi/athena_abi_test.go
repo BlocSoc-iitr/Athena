@@ -5,15 +5,6 @@ import (
 	"testing"
 )
 
-// Mock StarknetType to use in tests.
-type mockType struct {
-	id string
-}
-
-func (m mockType) idStr() string {
-	return m.id
-}
-
 /*tests for athena_abi */
 
 // TestIntFromString tests the intFromString function for StarknetCoreType.
@@ -38,6 +29,22 @@ func TestIntFromString(t *testing.T) {
 			}
 			if result != tt.expected {
 				t.Errorf("expected %d, got %d", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestIntFromStringError(t *testing.T) {
+	tests := []string{"", "unknown", "invalid", "123"}
+
+	for _, tt := range tests {
+		t.Run(tt, func(t *testing.T) {
+			_, err := intFromString(tt)
+			if err == nil {
+				t.Error("expected error but got nil")
+			}
+			if err.Error() != "invalid integer type: "+tt {
+				t.Errorf("expected error %s, got %v", "invalid integer type: "+tt, err)
 			}
 		})
 	}
@@ -72,9 +79,26 @@ func TestMaxValue(t *testing.T) {
 	}
 }
 
+func TestMaxValueError(t *testing.T) {
+	tests := []StarknetCoreType{NoneType, StarknetCoreType(999)}
+
+	for _, tt := range tests {
+		t.Run(tt.String(), func(t *testing.T) {
+			_, err := tt.maxValue()
+			if err == nil {
+				t.Error("expected error but got nil")
+			}
+			expectedErr := "cannot get max value for type: " + tt.String() // Adjust the error format
+			if err.Error() != expectedErr {
+				t.Errorf("expected error %s, got %v", expectedErr, err)
+			}
+		})
+	}
+}
+
 func TestStarknetArray(t *testing.T) {
 	array := StarknetArray{
-		InnerType: mockType{id: "Felt"},
+		InnerType: Felt,
 	}
 	expected := "[Felt]"
 	if result := array.idStr(); result != expected {
@@ -84,7 +108,7 @@ func TestStarknetArray(t *testing.T) {
 
 func TestStarknetOption(t *testing.T) {
 	option := StarknetOption{
-		InnerType: mockType{id: "U8"},
+		InnerType: U8,
 	}
 	expected := "Option[U8]"
 	if result := option.idStr(); result != expected {
@@ -94,7 +118,7 @@ func TestStarknetOption(t *testing.T) {
 
 func TestStarknetNonZero(t *testing.T) {
 	nonZero := StarknetNonZero{
-		InnerType: mockType{id: "U32"},
+		InnerType: U32,
 	}
 	expected := "NonZero[U32]"
 	if result := nonZero.idStr(); result != expected {
@@ -109,8 +133,8 @@ func TestStarknetEnum(t *testing.T) {
 			Name string
 			Type StarknetType
 		}{
-			{"Variant1", mockType{id: "U16"}},
-			{"Variant2", mockType{id: "NoneType"}},
+			{"Variant1", U16},
+			{"Variant2", NoneType},
 		},
 	}
 	expected := "Enum[Variant1:U16,Variant2]"
@@ -122,8 +146,8 @@ func TestStarknetEnum(t *testing.T) {
 func TestStarknetTuple(t *testing.T) {
 	tuple := StarknetTuple{
 		Members: []StarknetType{
-			mockType{id: "U16"},
-			mockType{id: "U32"},
+			U16,
+			U32,
 		},
 	}
 	expected := "(U16,U32)"
@@ -135,7 +159,7 @@ func TestStarknetTuple(t *testing.T) {
 func TestAbiParameter(t *testing.T) {
 	param := AbiParameter{
 		Name: "param1",
-		Type: mockType{id: "Felt"},
+		Type: Felt,
 	}
 	expected := "param1:Felt"
 	if result := param.idStr(); result != expected {
@@ -147,8 +171,8 @@ func TestStarknetStruct(t *testing.T) {
 	starknetStruct := StarknetStruct{
 		Name: "MyStruct",
 		Members: []AbiParameter{
-			{"field1", mockType{id: "U8"}},
-			{"field2", mockType{id: "Felt"}},
+			{"field1", U8},
+			{"field2", Felt},
 		},
 	}
 	expected := "{field1:U8,field2:Felt}"
@@ -173,7 +197,11 @@ func TestZeroValueStarknetType(t *testing.T) {
 	// Testing maxValue for a zero value
 	_, err := zeroValue.maxValue()
 	if err == nil {
-		t.Error("expected error for zero-value maxValue but got nil")
+		t.Error("expected error for zero-value max value but got nil")
+	}
+	expectedErr := "cannot get max value for type: Unknown"
+	if err.Error() != expectedErr {
+		t.Errorf("expected error %s, got %v", expectedErr, err)
 	}
 }
 
