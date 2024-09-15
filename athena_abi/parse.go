@@ -202,7 +202,11 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 	}
 
 	if strings.HasPrefix(abiType, "(") {
-		return parseTuple(abiType, customTypes), nil
+		res, err := ParseTuple(abiType, customTypes)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	}
 
 	parts := strings.Split(abiType, "::")[1:]
@@ -260,4 +264,67 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 			Msg: "Invalid ABI type: " + abiType,
 		}
 	}
+}
+
+func isNamedTuple(typeStr string) int {
+	for i := 1; i < len(typeStr)-1; i++ {
+		if typeStr[i] == ':' && typeStr[i-1] != ':' && typeStr[i+1] != ':' {
+			return i
+		}
+	}
+	if len(typeStr) > 1 && typeStr[0] == ':' && typeStr[1] != ':' {
+		return 0
+	}
+	if len(typeStr) > 1 && typeStr[len(typeStr)-1] == ':' && typeStr[len(typeStr)-2] != ':' {
+		return len(typeStr) - 1
+	}
+	return -1
+}
+
+// customTypes is a map from string to StarknetStruct or StarknetEnum
+func ParseTuple(abiType string, customTypes map[string]interface{}) (StarknetTuple, error) {
+	strippedTuple := strings.TrimSpace(abiType[1 : len(abiType)-1])
+	outputTypes := []StarknetType{}
+	parenthesisCache := []string{}
+	typeCache := []string{}
+	for _, typeString := range strings.Split(strippedTuple, ",") {
+		tupleOpen := strings.Count(typeString, "(")
+		tupleClose := strings.Count(typeString, ")")
+
+		if tupleOpen > 0 {
+			for i := 0; i < tupleOpen; i++ {
+				parenthesisCache = append(parenthesisCache, "(")
+			}
+		}
+
+		if len(parenthesisCache) > 0 {
+			typeCache = append(typeCache, typeString)
+		} else {
+			if isNamedTuple(typeString) > 0 {
+				res, err := parseType(typeString[isNamedTuple(typeString)+1:], customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				outputTypes = append(outputTypes, res)
+			} else {
+				res, err := parseType(typeString, customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				outputTypes = append(outputTypes, res)
+			}
+		}
+
+		if tupleClose > 0 {
+			parenthesisCache = parenthesisCache[:len(parenthesisCache)-tupleClose]
+			if len(parenthesisCache) == 0 {
+				res, err := ParseTuple(strings.Join(typeCache, ","), customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				outputTypes = append(outputTypes, res)
+			}
+		}
+	}
+	return StarknetTuple{Members: outputTypes}, nil
 }
