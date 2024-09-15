@@ -15,7 +15,7 @@ func bigIntToBytes(value big.Int, length int) []byte {
 	return b
 }
 
-func starknetKeccak(data []byte) []byte {
+func StarknetKeccak(data []byte) []byte {
 	hash := sha3.NewLegacyKeccak256()
 	hash.Write(data)
 
