@@ -1,6 +1,7 @@
 package athena_abi
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -260,4 +261,99 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 			Msg: "Invalid ABI type: " + abiType,
 		}
 	}
+}
+
+func parseTuple(abiType string, customTypes map[string]interface{}) (StarknetTuple, error) {
+	// Helper function to check if the type string represents a named tuple
+	_isNamedTuple := func(typeStr string) int {
+		if len(typeStr) == 0 {
+			fmt.Printf("Length of typeStr is zero.")
+		}
+		for i := 0; i < len(typeStr); i++ {
+			if typeStr[i] == ':' {
+				// Check if the colon is not preceded or followed by another colon
+				if (i == 0 || typeStr[i-1] != ':') && (i == len(typeStr)-1 || typeStr[i+1] != ':') {
+					return i
+				}
+			}
+		}
+		return -1
+	}
+
+	// Error: Empty input
+	if len(abiType) < 2 {
+		return StarknetTuple{}, errors.New("invalid ABI type: input too short")
+	}
+
+	// Remove Outer Parentheses & Whitespace
+	strippedTuple := strings.TrimSpace(abiType[1 : len(abiType)-1])
+
+	members := []StarknetType{}
+	parenthesisCache := []string{}
+	typeCache := []string{}
+
+	// Iterate over each type string in the tuple
+	for _, typeString := range strings.Split(strippedTuple, ",") {
+		typeString = strings.TrimSpace(typeString)
+
+		tupleOpen := strings.Count(typeString, "(")
+		tupleClose := strings.Count(typeString, ")")
+
+		// Error: Mismatched parentheses
+		if tupleClose > len(parenthesisCache) {
+			return StarknetTuple{}, errors.New("mismatched parentheses in ABI type")
+		}
+
+		// Handle opening parentheses
+		if tupleOpen > 0 {
+			for i := 0; i < tupleOpen; i++ {
+				parenthesisCache = append(parenthesisCache, "(")
+			}
+		}
+
+		if len(parenthesisCache) > 0 {
+			// Parsing inside a nested tuple
+			typeCache = append(typeCache, typeString)
+		} else {
+			// Parsing at root level
+			if pos := _isNamedTuple(typeString); pos != -1 {
+				parsedType, err := parseType(typeString[pos+1:], customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				members = append(members, parsedType)
+			} else {
+				parsedType, err := parseType(typeString, customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				members = append(members, parsedType)
+			}
+		}
+
+		// Handle closing parentheses
+		if tupleClose > 0 {
+			for i := 0; i < tupleClose; i++ {
+				parenthesisCache = parenthesisCache[:len(parenthesisCache)-1]
+			}
+
+			// If we have closed all parentheses for the current nested tuple
+			if len(parenthesisCache) == 0 {
+				parsedTuple, err := parseTuple(strings.Join(typeCache, ","), customTypes)
+				if err != nil {
+					return StarknetTuple{}, err
+				}
+				members = append(members, parsedTuple)
+				typeCache = []string{}
+			}
+		}
+	}
+
+	// Error: Unbalanced parentheses
+	if len(parenthesisCache) > 0 {
+		return StarknetTuple{}, errors.New("unbalanced parentheses in ABI type")
+	}
+
+	// Return the successfully parsed tuple
+	return StarknetTuple{Members: members}, nil
 }
