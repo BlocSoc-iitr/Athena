@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/BlocSoc-iitr/Athena/athena/types"
-	
 )
 
 type CairoEventDecoder struct {

@@ -1,12 +1,11 @@
 package main
 
 import (
-	
 	"flag"
 	"fmt"
-	"log"
 	"github.com/BlocSoc-iitr/Athena/athena/backfill/importers"
 	"github.com/NethermindEth/starknet.go/rpc"
+	"log"
 )
 
 func main() {

@@ -7,33 +7,15 @@ import (
 	"strings"
 )
 
-type ABIType struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
-}
-
-type StructType struct {
-	ABIType
-	Members []Member `json:"members"`
-}
-
 type InterfaceType struct {
-	ABIType
+	Type  string     `json:"type"`
+	Name  string     `json:"name"`
 	Items []Function `json:"items"`
 }
 
-type ImplType struct {
-	ABIType
-	InterfaceName string `json:"interface_name"`
-}
-
-type EnumType struct {
-	ABIType
-	Variants []Variant `json:"variants"`
-}
-
 type EventType struct {
-	ABIType
+	Kind    string   `json:"kind"`
+	Name    string   `json:"name"`
 	Members []Member `json:"members"`
 }
 
@@ -48,11 +30,7 @@ type Function struct {
 type Member struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
-}
-
-type Variant struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Kind string `json:"kind"`
 }
 
 type Output struct {
@@ -79,23 +57,20 @@ func TypeToReadableName(typ string) string {
 	return typ
 }
 
-func GetParsedAbi(abi_to_decode string) {
-	// Check if the input ABI is a valid JSON array
+func GetParsedAbi(abi_to_decode json.RawMessage) {
 	var abi []map[string]interface{}
-	err := json.Unmarshal([]byte(abi_to_decode), &abi)
-	if err != nil {
-		// If ABI is a string, unmarshal it as a string and try again
-		var abiString string
-		if err = json.Unmarshal([]byte(abi_to_decode), &abiString); err == nil {
-			// Attempt to parse the string as JSON array
-			err = json.Unmarshal([]byte(abiString), &abi)
-			if err != nil {
-				log.Fatalf("Error parsing ABI string: %v", err)
-			}
-		} else {
-			log.Fatalf("Error unmarshalling ABI: %v", err)
+	var abiString string
+	if err := json.Unmarshal(abi_to_decode, &abiString); err == nil {
+		err = json.Unmarshal([]byte(abiString), &abi)
+		if err != nil {
+			log.Fatalf("Error parsing ABI string: %v", err)
 		}
+	} else {
+		log.Fatalf("Error unmarshalling ABI: %v", err)
 	}
+
+	// var events []string
+	// var functions []string
 
 	// Process ABI items
 	for _, item := range abi {
@@ -129,17 +104,25 @@ func GetParsedAbi(abi_to_decode string) {
 			var event EventType
 			if err := json.Unmarshal(itemBytes, &event); err == nil {
 				parts := strings.Split(event.Name, "::")
-				lastWord := parts[len(parts)-1]
+				eventName := parts[len(parts)-1]
 				members := []string{}
 				for _, member := range event.Members {
 					memberType := TypeToReadableName(member.Type)
 					members = append(members, fmt.Sprintf("%s: %s", member.Name, memberType))
 				}
 				membersSignature := strings.Join(members, ", ")
-				fmt.Printf("Event: %s(%s)\n", lastWord, membersSignature)
+				fmt.Printf("Event: %s(%s)\n", eventName, membersSignature)
 			}
 		default:
 			continue
 		}
 	}
 }
+
+// map[
+// 	kind:struct
+// 	members:[map[kind:key name:owner type:core::felt252] map[kind:data name:guardian
+//           type:core::felt252]]
+// 	name:account::argent_account::ArgentAccount::AccountCreated
+// 	type:event
+// 	]
