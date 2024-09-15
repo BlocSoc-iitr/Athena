@@ -3,7 +3,6 @@ package decoder
 import (
 	"encoding/binary"
 	"github.com/BlocSoc-iitr/Athena/athena/types"
-	
 )
 
 type CairoFunctionDecoder struct {

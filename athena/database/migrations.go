@@ -3,8 +3,8 @@ package database
 import (
 	"log"
 	// "gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"github.com/BlocSoc-iitr/Athena/athena/database/models"
+	"gorm.io/gorm"
 )
 
 func MigrateUp(db *gorm.DB) {

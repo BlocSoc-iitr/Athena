@@ -2,7 +2,7 @@ package readers
 
 import (
 	"github.com/BlocSoc-iitr/Athena/athena/types"
-	
+
 	"testing"
 )
 

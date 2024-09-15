@@ -1,14 +1,13 @@
 package main
+
 import (
-	
 	"context"
-	
+
 	"encoding/json"
 	"flag"
 	"fmt"
-	"sync"
 	"github.com/BlocSoc-iitr/Athena/athena/backfill/importers"
-	
+	"sync"
 )
 
 type rpcRequest struct {
@@ -80,8 +79,9 @@ type BlockTxHashes struct {
 		} `json:"receipt"`
 	} `json:"transactions"`
 }
+
 func main() {
-	
+
 	fromBlockNumber := flag.Uint64("from", 0, "Starting block number")
 	toBlockNumber := flag.Uint64("to", 0, "Ending block number")
 	rpcURL := flag.String("rpc-url", "", "RPC URL of the blockchain node")

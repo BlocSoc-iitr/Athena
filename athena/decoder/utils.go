@@ -19,10 +19,10 @@ func splitTxData(txData []byte) (calldata [][]byte, result [][]byte) {
 	if len(txData) <= 4 {
 		return [][]byte{}, [][]byte{} // No calldata if data length is less than or equal to 4
 	}
-	
+
 	// Extract the function signature
 	signature := txData[:4]
-	
+
 	// The remaining bytes are considered calldata
 	calldata = [][]byte{signature, txData[4:]} // Splitting into signature and the rest as calldata
 
@@ -44,13 +44,13 @@ func splitEventData(eventData []byte) (data [][]byte, keys [][]byte) {
 	if len(eventData) <= 4 {
 		return [][]byte{}, [][]byte{} // Not enough data to split
 	}
-	
+
 	// Extract the event signature
 	signature := eventData[:4]
-	
+
 	// The rest of the data
 	remainingData := eventData[4:]
-	
+
 	// Assuming you need to split remainingData into data and keys
 	// For simplicity, this example treats all remaining data as a single part.
 	data = [][]byte{signature, remainingData}

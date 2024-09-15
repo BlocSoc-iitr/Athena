@@ -1,19 +1,19 @@
 package readers
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/BlocSoc-iitr/Athena/athena/database/models"
 	"github.com/BlocSoc-iitr/Athena/athena/types"
 	"gorm.io/gorm"
-	"github.com/BlocSoc-iitr/Athena/athena/database/models"
 	"log"
 	"os"
-	"encoding/json"
 	"path/filepath"
 	"sort"
 	"time"
-	"fmt"
 )
 
-func FetchBackfillsByDatatype(db *gorm.DB, dataType types.BackfillDataType, network types.SupportedNetwork) []models.BackfilledRange{
+func FetchBackfillsByDatatype(db *gorm.DB, dataType types.BackfillDataType, network types.SupportedNetwork) []models.BackfilledRange {
 	var backFilledRanges []models.BackfilledRange
 
 	err := db.Where("data_type = ? AND network = ?", dataType, network).Order("start_block").Find(&backFilledRanges).Error
@@ -24,25 +24,25 @@ func FetchBackfillsByDatatype(db *gorm.DB, dataType types.BackfillDataType, netw
 	return backFilledRanges
 }
 
-func FetchBackfillsByID(db *gorm.DB, backfillID interface{}) ([]models.BackfilledRange) {
-    var backfilledRanges []models.BackfilledRange
+func FetchBackfillsByID(db *gorm.DB, backfillID interface{}) []models.BackfilledRange {
+	var backfilledRanges []models.BackfilledRange
 
-    if id, ok := backfillID.(string); ok {
-        backfillID = []string{id}
-    }
+	if id, ok := backfillID.(string); ok {
+		backfillID = []string{id}
+	}
 
-    err := db.Where("backfill_id IN ?", backfillID).
-        Find(&backfilledRanges).Error
-    if err != nil {
+	err := db.Where("backfill_id IN ?", backfillID).
+		Find(&backfilledRanges).Error
+	if err != nil {
 		log.Fatalf("Error in fetching backfill ranges: %v", err)
-    }
+	}
 
-    return backfilledRanges
+	return backfilledRanges
 }
 
-func GetAbis(db *gorm.DB, abiNames []string, decoderOS string) ([]models.ContractABI) {
-    if db != nil {
-        var contractABIs []models.ContractABI
+func GetAbis(db *gorm.DB, abiNames []string, decoderOS string) []models.ContractABI {
+	if db != nil {
+		var contractABIs []models.ContractABI
 		query := db.Where("decoder_os = ?", decoderOS)
 
 		if len(abiNames) > 0 {
@@ -52,46 +52,46 @@ func GetAbis(db *gorm.DB, abiNames []string, decoderOS string) ([]models.Contrac
 		result := query.Order("priority DESC, abi_name").Find(&contractABIs)
 
 		if result.Error != nil {
-    		log.Fatalf("Error querying database: %v", result.Error)
+			log.Fatalf("Error querying database: %v", result.Error)
 		} else if result.RowsAffected == 0 {
-    		log.Fatalf("No ABIs found for decoderOS: %s and abiNames: %v", decoderOS, abiNames)
+			log.Fatalf("No ABIs found for decoderOS: %s and abiNames: %v", decoderOS, abiNames)
 		}
 		return contractABIs
-    }
+	}
 
-    appDir, err := os.UserConfigDir()
-    if err != nil {
-		log.Fatalf("Error in fetching abis: %v", err)
-    }
-
-    appDir = filepath.Join(appDir, "athena")
-
-    if _, err := os.Stat(appDir); os.IsNotExist(err) {
-        if err := os.Mkdir(appDir, os.ModePerm); err != nil {
-			log.Fatalf("Error in fetching abis: %v", err)
-        }
-    }
-
-    contractPath := filepath.Join(appDir, "contract-abis.json")
-    if _, err := os.Stat(contractPath); os.IsNotExist(err) {
-        return []models.ContractABI{}
-    }
-
-    fileData, err := os.ReadFile(contractPath)
-    if err != nil {
-        log.Fatalf("Error in fetching abis: %v", err)
-    }
-
-    if len(fileData) == 0 {
-        return []models.ContractABI{}
-    }
-
-    var abiJSON []models.ContractABI
-    if err := json.Unmarshal(fileData, &abiJSON); err != nil {
+	appDir, err := os.UserConfigDir()
+	if err != nil {
 		log.Fatalf("Error in fetching abis: %v", err)
 	}
 
-	contains := func(slice []string, item string) bool{
+	appDir = filepath.Join(appDir, "athena")
+
+	if _, err := os.Stat(appDir); os.IsNotExist(err) {
+		if err := os.Mkdir(appDir, os.ModePerm); err != nil {
+			log.Fatalf("Error in fetching abis: %v", err)
+		}
+	}
+
+	contractPath := filepath.Join(appDir, "contract-abis.json")
+	if _, err := os.Stat(contractPath); os.IsNotExist(err) {
+		return []models.ContractABI{}
+	}
+
+	fileData, err := os.ReadFile(contractPath)
+	if err != nil {
+		log.Fatalf("Error in fetching abis: %v", err)
+	}
+
+	if len(fileData) == 0 {
+		return []models.ContractABI{}
+	}
+
+	var abiJSON []models.ContractABI
+	if err := json.Unmarshal(fileData, &abiJSON); err != nil {
+		log.Fatalf("Error in fetching abis: %v", err)
+	}
+
+	contains := func(slice []string, item string) bool {
 		for _, s := range slice {
 			if s == item {
 				return true
@@ -100,17 +100,17 @@ func GetAbis(db *gorm.DB, abiNames []string, decoderOS string) ([]models.Contrac
 		return false
 	}
 
-    var contractABIs []models.ContractABI
-    for _, abi := range abiJSON {
-        if (len(abiNames) == 0 || contains(abiNames, abi.AbiName)) && abi.DecoderOS == decoderOS {
-            contractABIs = append(contractABIs, abi)
-        }
-    }
+	var contractABIs []models.ContractABI
+	for _, abi := range abiJSON {
+		if (len(abiNames) == 0 || contains(abiNames, abi.AbiName)) && abi.DecoderOS == decoderOS {
+			contractABIs = append(contractABIs, abi)
+		}
+	}
 
-    return contractABIs
+	return contractABIs
 }
 
-func FirstBlockTimestamp(network types.SupportedNetwork) (time.Time) {
+func FirstBlockTimestamp(network types.SupportedNetwork) time.Time {
 	switch network {
 	case types.StarkNet:
 		return time.Date(2021, 11, 16, 13, 24, 8, 0, time.UTC)
@@ -120,7 +120,7 @@ func FirstBlockTimestamp(network types.SupportedNetwork) (time.Time) {
 	}
 }
 
-func GetBlockTimestamps(db *gorm.DB, network types.SupportedNetwork, resolution int, fromBlock int64) ([]types.BlockTimestamp) {
+func GetBlockTimestamps(db *gorm.DB, network types.SupportedNetwork, resolution int, fromBlock int64) []types.BlockTimestamp {
 	var blockTimestamps []types.BlockTimestamp
 
 	if db != nil {
@@ -145,7 +145,7 @@ func GetBlockTimestamps(db *gorm.DB, network types.SupportedNetwork, resolution 
 				Timestamp:   timestamp,
 			})
 		}
-		return blockTimestamps	
+		return blockTimestamps
 	}
 
 	appDir, err := os.UserConfigDir()
