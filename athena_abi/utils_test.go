@@ -1,9 +1,9 @@
 package athena_abi
 
 import (
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBigIntToBytes(t *testing.T) {
@@ -13,23 +13,23 @@ func TestBigIntToBytes(t *testing.T) {
 		length   int
 		expected []byte
 	}{
-		{*big.NewInt(12345), 4, []byte{0, 0, 48, 57}}, // 12345 in 4 bytes
+		{*big.NewInt(12345), 4, []byte{0, 0, 48, 57}},                          // 12345 in 4 bytes
 		{*big.NewInt(0x123456), 6, []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x00}}, // 0x123456 in 6 bytes
 	}
 
 	t.Run("Normal Case - First Item", func(t *testing.T) {
-        tt := tests[0]
-        result := bigIntToBytes(tt.input, tt.length)
-        assert.Equal(t, tt.expected, result)
-    })
+		tt := tests[0]
+		result := bigIntToBytes(tt.input, tt.length)
+		assert.Equal(t, tt.expected, result)
+	})
 
 	t.Run("Pass Case - Second Item with NotEqual", func(t *testing.T) {
-        tt := tests[1]
-        incorrectExpected := []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x01} // Incorrect last byte
-        result := bigIntToBytes(tt.input, tt.length)
-        // Verify that the result is not equal to the incorrect expected value
-        assert.NotEqual(t, incorrectExpected, result)
-    })
+		tt := tests[1]
+		incorrectExpected := []byte{0x01, 0x23, 0x45, 0x00, 0x00, 0x01} // Incorrect last byte
+		result := bigIntToBytes(tt.input, tt.length)
+		// Verify that the result is not equal to the incorrect expected value
+		assert.NotEqual(t, incorrectExpected, result)
+	})
 
 	// Boundary cases
 	t.Run("Zero Length", func(t *testing.T) {
