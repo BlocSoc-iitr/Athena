@@ -14,13 +14,13 @@ type AbiMemberType string
 
 const (
 	Function    AbiMemberType = "function"
-	L1Handler   AbiMemberType = "l1Handler"
+	L1Handler   AbiMemberType = "l1_handler"
 	AbiStruct   AbiMemberType = "struct"
 	Constructor AbiMemberType = "constructor"
 	Event       AbiMemberType = "event"
 	Interface   AbiMemberType = "interface"
 	Impl        AbiMemberType = "impl"
-	TypeDef     AbiMemberType = "typeDef" // Internal Definition: typeDef = Union[struct, enum]
+	TypeDef     AbiMemberType = "type_def" // Internal Definition: typeDef = Union[struct, enum]
 )
 
 type StarknetAbiEventKind string
