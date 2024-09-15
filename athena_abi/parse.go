@@ -1,6 +1,7 @@
 package athena_abi
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -328,3 +329,190 @@ func ParseTuple(abiType string, customTypes map[string]interface{}) (StarknetTup
 	}
 	return StarknetTuple{Members: outputTypes}, nil
 }
+
+func parseAbiParameters(names []string, types []string, customTypes map[string]interface{}) ([]AbiParameter, error) {
+	outputParameters := []AbiParameter{}
+
+	for i := 0; i < len(names); i++ {
+		if strings.HasSuffix(types[i], "*") {
+			lenParam := outputParameters[len(outputParameters)-1]
+			outputParameters = outputParameters[:len(outputParameters)-1]
+			if !(strings.HasSuffix(lenParam.Name, "_len") || strings.HasSuffix(lenParam.Name, "_size")) {
+				return nil, fmt.Errorf("Type " + types[i] + " not preceded by a length parameter")
+			}
+		}
+
+		res, err := parseType(types[i], customTypes)
+		if err != nil {
+			return nil, err
+		}
+		outputParameters = append(outputParameters, AbiParameter{
+			Name: names[i],
+			Type: res,
+		})
+	}
+
+	return outputParameters, nil
+}
+
+func ParseAbiTypes(types []string, customTypes map[string]interface{}) ([]StarknetType, error) {
+	outputTypes := []StarknetType{}
+
+	for _, jsonTypeStr := range types {
+		if strings.HasSuffix(jsonTypeStr, "*") {
+			lenType := outputTypes[len(outputTypes)-1]
+			outputTypes = outputTypes[:len(outputTypes)-1]
+			if lenType != Felt {
+				return nil, fmt.Errorf("Type " + jsonTypeStr + " not preceded by a Felt Length Param")
+			}
+		}
+
+		res, err := parseType(jsonTypeStr, customTypes)
+		if err != nil {
+			return nil, err
+		}
+		outputTypes = append(outputTypes, res)
+	}
+
+	return outputTypes, nil
+}
+
+func ParseAbiFunction(abiFunction map[string]interface{}, customTypes map[string]interface{}) (*AbiFunction, error) {
+	names := []string{}
+	types := []string{}
+	for _, abiInput := range abiFunction["inputs"].([]map[string]interface{}) {
+		names = append(names, abiInput["name"].(string))
+	}
+	for _, abiInput := range abiFunction["inputs"].([]map[string]interface{}) {
+		types = append(types, abiInput["type"].(string))
+	}
+	parsedInputs, err := parseAbiParameters(
+		names,
+		types,
+		customTypes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, abiOutput := range abiFunction["outputs"].([]map[string]interface{}) {
+		types = append(types, abiOutput["type"].(string))
+	}
+
+	parsedOutputs, err := ParseAbiTypes(
+		types,
+		customTypes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AbiFunction{
+		name:    abiFunction["name"].(string),
+		inputs:  parsedInputs,
+		outputs: parsedOutputs,
+	}, nil
+}
+
+func ParseAbiEvent(abiEvent map[string]interface{}, customTypes map[string]interface{}) (*AbiEvent, error) {
+	eventParameters := []map[string]interface{}{}
+	if value, exists := abiEvent["kind"]; exists {
+		if value == "struct" {
+			eventParameters = abiEvent["members"].([]map[string]interface{})
+		} else {
+			return nil, nil
+		}
+	} else if inputs, ok := abiEvent["inputs"].([]map[string]interface{}); ok {
+		for _, e := range inputs {
+			eventParameter := map[string]interface{}{"kind": "data"}
+			for k, v := range e {
+				eventParameter[k] = v
+			}
+			eventParameters = append(eventParameters, eventParameter)
+		}
+	} else if data, ok := abiEvent["data"].([]map[string]interface{}); ok {
+		for _, e := range data {
+			eventParameter := map[string]interface{}{"kind": "data"}
+			for k, v := range e {
+				eventParameter[k] = v
+			}
+			eventParameters = append(eventParameters, eventParameter)
+		}
+		for _, e := range abiEvent["keys"].([]map[string]interface{}) {
+			eventParameter := map[string]interface{}{"kind": "key"}
+			for k, v := range e {
+				eventParameter[k] = v
+			}
+			eventParameters = append(eventParameters, eventParameter)
+		}
+	} else {
+		return nil, nil
+	}
+
+	types := []string{}
+	names := []string{}
+
+	for _, eventParameter := range eventParameters {
+		types = append(types, eventParameter["type"].(string))
+		names = append(names, eventParameter["name"].(string))
+	}
+
+	decodedParams, err := parseAbiParameters(
+		names,
+		types,
+		customTypes,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	eventKinds := map[string]string{}
+	for _, eventParameter := range eventParameters {
+		eventKinds[eventParameter["name"].(string)] = eventParameter["kind"].(string)
+	}
+
+	eventData := map[string]StarknetType{}
+	for _, param := range decodedParams {
+		if eventKinds[param.Name] == "data" {
+			eventData[param.Name] = param.Type
+		}
+	}
+
+	eventKeys := map[string]StarknetType{}
+	for _, param := range decodedParams {
+		if eventKinds[param.Name] == "key" {
+			eventKeys[param.Name] = param.Type
+		}
+	}
+
+	parts := strings.Split(abiEvent["name"].(string), "::")
+
+	abiEventParams := []string{}
+
+	for _, param := range decodedParams {
+		abiEventParams = append(abiEventParams, param.Name)
+	}
+
+	return &AbiEvent{
+		name:       parts[len(parts)-1],
+		parameters: abiEventParams,
+		data:       eventData,
+		keys:       eventKeys,
+	}, nil
+}
+
+// ---- Notes ----
+//   When the event is emitted, the serialization to keys and data happens as follows:
+
+//   Since the TestEnum variant has kind nested, add the first key: sn_keccak(TestEnum),
+//   and the rest of the serialization to keys and data is done recursively via
+//   the starknet::event trait implementation of MyEnum.
+
+//   Next, you can handle a "kind": "nested" variant (previously it was TestEnum, now it’s Var1),
+//   which means you can add another key depending on the sub-variant: sn_keccak(Var1), and proceed
+//   to serialize according to the starknet::event implementation of MyStruct.
+//
+//   Finally, proceed to serialize MyStruct, which gives us a single data member.
+//
+//   This results in keys = [sn_keccak(TestEnum), sn_keccak(Var1)] and data=[5]
