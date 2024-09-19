@@ -163,13 +163,15 @@ func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{},
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
 				}
 			}
+			var arrayItems []interface{}
 			for i := 0; i < int(arrayLen.Int64()); i++ {
 				decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
 				if err != nil {
 					return nil, err
 				}
-				outputData = append(outputData, decoded[0])
+				arrayItems = append(arrayItems, decoded[0])
 			}
+			outputData = append(outputData, arrayItems)
 		case StarknetOption:
 			optionPresent, err := pop(callData)
 			if err != nil {
@@ -207,13 +209,15 @@ func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{},
 			}
 			outputData = append(outputData, map[string]interface{}{variantName: decoded[0]}) //change made
 		case StarknetTuple:
+			var tupleItems []interface{}
 			for _, tupleMembers := range t.Members {
 				decoded, err := DecodeFromTypes([]StarknetType{tupleMembers}, callData)
 				if err != nil {
 					return nil, err
 				}
-				outputData = append(outputData, decoded[0])
+				tupleItems = append(tupleItems, decoded[0])
 			}
+			outputData = append(outputData, tupleItems)
 		case StarknetNonZero:
 			decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
 			if err != nil {
