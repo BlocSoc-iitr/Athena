@@ -49,7 +49,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData *[]*big.Int) (interfa
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
 			}
 		}
-		decodeTypeMaxVal, _ := decodeType.maxValue()
+		decodeTypeMaxVal, _ := StarknetCoreType(U128).maxValue()
 		if decodedLow.Cmp(big.NewInt(0)) < 0 || decodedLow.Cmp(decodeTypeMaxVal) > 0 {
 			return nil, fmt.Errorf("low Exceeds U128 range")
 		}
