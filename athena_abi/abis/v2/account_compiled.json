@@ -1,0 +1,118 @@
+[
+  {
+    "type": "function",
+    "name": "__validate_declare__",
+    "inputs": [
+      {
+        "name": "class_hash",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "struct",
+    "name": "core::starknet::account::Call",
+    "members": [
+      {
+        "name": "to",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "selector",
+        "type": "core::felt252"
+      },
+      {
+        "name": "calldata",
+        "type": "core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "__validate__",
+    "inputs": [
+      {
+        "name": "calls",
+        "type": "core::array::Array::<core::starknet::account::Call>"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "__execute__",
+    "inputs": [
+      {
+        "name": "calls",
+        "type": "core::array::Array::<core::starknet::account::Call>"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::array::Array::<core::array::Span::<core::felt252>>"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "public_key_",
+        "type": "core::felt252"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "__validate_deploy__",
+    "inputs": [
+      {
+        "name": "class_hash",
+        "type": "core::felt252"
+      },
+      {
+        "name": "contract_address_salt",
+        "type": "core::felt252"
+      },
+      {
+        "name": "public_key_",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "account::account::account::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]

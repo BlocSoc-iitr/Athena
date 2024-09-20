@@ -1,0 +1,31 @@
+[
+  {
+    "type": "function",
+    "name": "increase_balance",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "function",
+    "name": "get_balance",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "hello_starknet::hello_starknet::hello_starknet::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]

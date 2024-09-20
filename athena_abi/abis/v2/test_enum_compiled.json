@@ -1,0 +1,78 @@
+[
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "test_enum::test_enum::MyEnum",
+    "variants": [
+      {
+        "name": "a",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "b",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "c",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "receive_and_send_enum",
+    "inputs": [
+      {
+        "name": "my_enum",
+        "type": "test_enum::test_enum::MyEnum"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "test_enum::test_enum::MyEnum"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "get_enum",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "test_enum::test_enum::MyEnum"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "get_enum_without_value",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "test_enum::test_enum::MyEnum"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "test_enum::test_enum::TestEnum::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]

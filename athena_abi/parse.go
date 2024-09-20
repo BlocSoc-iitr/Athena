@@ -10,11 +10,21 @@ func GroupAbiByType(abiJson []map[string]interface{}) map[AbiMemberType][]map[st
 	grouped := make(map[AbiMemberType][]map[string]interface{})
 
 	for _, entry := range abiJson {
-		if entry["type"] == "struct" || entry["type"] == "enum" {
+		/*if entry["type"] == "struct" || entry["type"] == "enum" {
 			grouped["type_def"] = append(grouped["type_def"], entry)
 		} else {
-			grouped[entry["type"].(AbiMemberType)] = append(grouped[entry["type"].(AbiMemberType)], entry)
+			grouped[AbiMemberType(typeStr)] = append(grouped[AbiMemberType(entry["type"])], entry)
+
+		}*/
+		typeStr, _ := entry["type"].(string)
+
+		// Convert the string to AbiMemberType
+		if typeStr == "struct" || typeStr == "enum" {
+			grouped["type_def"] = append(grouped["type_def"], entry)
+		} else {
+			grouped[AbiMemberType(typeStr)] = append(grouped[AbiMemberType(typeStr)], entry)
 		}
+
 	}
 	return grouped
 }
@@ -150,21 +160,36 @@ func ParseEnumsAndStructs(abiStructs []map[string]interface{}) (map[string]inter
 
 	return outputTypes, nil
 }
-
 func parseStruct(abiStruct map[string]interface{}, typeContext map[string]interface{}) (StarknetStruct, error) {
 	members := []AbiParameter{}
 
-	for _, member := range abiStruct["members"].([]map[string]interface{}) {
+	// Assert that "members" is a slice of interfaces
+	memberInterfaces, ok := abiStruct["members"].([]interface{})
+	if !ok {
+		return StarknetStruct{}, fmt.Errorf("invalid type for members: expected []interface{}")
+	}
+
+	// Iterate over the members and convert each to map[string]interface{}
+	for _, memberInterface := range memberInterfaces {
+		member, ok := memberInterface.(map[string]interface{})
+		if !ok {
+			return StarknetStruct{}, fmt.Errorf("invalid type for member: expected map[string]interface{}")
+		}
+
+		// Parse the member type
 		res, err := parseType(member["type"].(string), typeContext)
 		if err != nil {
 			return StarknetStruct{}, err
 		}
+
+		// Append the member to the list
 		members = append(members, AbiParameter{
 			Name: member["name"].(string),
 			Type: res,
 		})
 	}
 
+	// Return the parsed StarknetStruct
 	return StarknetStruct{
 		Name:    abiStruct["name"].(string),
 		Members: members,
@@ -177,7 +202,20 @@ func parseEnum(abiEnum map[string]interface{}, typeContext map[string]interface{
 		Type StarknetType
 	}{}
 
-	for _, variant := range abiEnum["variants"].([]map[string]interface{}) {
+	// Handle the case where `abiEnum["variants"]` is a `[]interface{}`
+	rawVariants, ok := abiEnum["variants"].([]interface{})
+	if !ok {
+		return StarknetEnum{}, fmt.Errorf("expected variants to be a slice of interface{}")
+	}
+
+	// Loop over the `rawVariants` and safely cast each to `map[string]interface{}`
+	for _, rawVariant := range rawVariants {
+		variant, ok := rawVariant.(map[string]interface{})
+		if !ok {
+			return StarknetEnum{}, fmt.Errorf("expected variant to be a map[string]interface{}")
+		}
+
+		// Parse the type of each variant
 		res, err := parseType(variant["type"].(string), typeContext)
 		if err != nil {
 			return StarknetEnum{}, err
@@ -202,12 +240,15 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 		return NoneType, nil
 	}
 
-	if strings.HasPrefix(abiType, "(") {
+	/*if strings.HasPrefix(abiType, "(") {
 		res, err := ParseTuple(abiType, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return res, nil
+	}*/
+	if strings.HasPrefix(abiType, "(") && strings.HasSuffix(abiType, ")") {
+		return ParseTuple(abiType, customTypes)
 	}
 
 	parts := strings.Split(abiType, "::")[1:]
@@ -244,6 +285,13 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 			return nil, err
 		}
 		return StarknetNonZero{res}, nil
+		//implemented integer parsing
+	case len(parts) >= 2 && parts[0] == "integer":
+		intType, err := intFromString(parts[1])
+		if err != nil {
+			return nil, err
+		}
+		return intType, nil
 	default:
 		if val, exists := customTypes[abiType]; exists {
 			return val.(StarknetType), nil

@@ -1,0 +1,679 @@
+[
+  {
+    "type": "impl",
+    "name": "IHelloStarknetImpl",
+    "interface_name": "hello2::hello2::IHelloStarknet"
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "hello2::hello2::Foo",
+    "members": [
+      {
+        "name": "val",
+        "type": "core::felt252"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "hello2::hello2::UserData",
+    "members": [
+      {
+        "name": "address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "is_claimed",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "hello2::hello2::Bet",
+    "members": [
+      {
+        "name": "name",
+        "type": "core::felt252"
+      },
+      {
+        "name": "description",
+        "type": "core::felt252"
+      },
+      {
+        "name": "expire_date",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "creation_time",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "creator",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "is_cancelled",
+        "type": "core::bool"
+      },
+      {
+        "name": "is_voted",
+        "type": "core::bool"
+      },
+      {
+        "name": "bettor",
+        "type": "hello2::hello2::UserData"
+      },
+      {
+        "name": "counter_bettor",
+        "type": "hello2::hello2::UserData"
+      },
+      {
+        "name": "winner",
+        "type": "core::bool"
+      },
+      {
+        "name": "pool",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "hello2::hello2::Order",
+    "members": [
+      {
+        "name": "p1",
+        "type": "core::felt252"
+      },
+      {
+        "name": "p2",
+        "type": "core::integer::u16"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "hello2::hello2::MyEnum",
+    "variants": [
+      {
+        "name": "Response",
+        "type": "hello2::hello2::Order"
+      },
+      {
+        "name": "Warning",
+        "type": "core::felt252"
+      },
+      {
+        "name": "Error",
+        "type": "core::integer::u16"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::integer::u8>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "core::integer::u8"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<hello2::hello2::Order>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "hello2::hello2::Order"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "hello2::hello2::IHelloStarknet",
+    "items": [
+      {
+        "type": "function",
+        "name": "increase_balance",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_balance",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_status",
+        "inputs": [
+          {
+            "name": "new_status",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_status",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_ca",
+        "inputs": [
+          {
+            "name": "address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_ca",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "increase_balance_u8",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::integer::u8"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_balance_u8",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u8"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "test_u16",
+        "inputs": [
+          {
+            "name": "p1",
+            "type": "core::integer::u16"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u16"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "test_u32",
+        "inputs": [
+          {
+            "name": "p1",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "test_u64",
+        "inputs": [
+          {
+            "name": "p1",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "test_u128",
+        "inputs": [
+          {
+            "name": "p1",
+            "type": "core::integer::u128"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u128"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "test_u256",
+        "inputs": [
+          {
+            "name": "p1",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "echo_array",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "core::array::Array::<core::integer::u8>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u8>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "echo_array_u256",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "echo_array_bool",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "core::array::Array::<core::bool>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::bool>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "echo_un_tuple",
+        "inputs": [
+          {
+            "name": "a",
+            "type": "(core::felt252, core::integer::u16)"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::felt252, core::integer::u16)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "echo_struct",
+        "inputs": [
+          {
+            "name": "tt",
+            "type": "hello2::hello2::Foo"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "hello2::hello2::Foo"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_bet",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_bet",
+        "inputs": [
+          {
+            "name": "test",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "hello2::hello2::Bet"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_user1",
+        "inputs": [
+          {
+            "name": "user",
+            "type": "hello2::hello2::UserData"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_user1",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "hello2::hello2::UserData"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_user",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "hello2::hello2::UserData"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "array2d_ex",
+        "inputs": [
+          {
+            "name": "test",
+            "type": "core::array::Array::<core::array::Array::<core::felt252>>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "array2d_array",
+        "inputs": [
+          {
+            "name": "test",
+            "type": "core::array::Array::<core::array::Array::<core::felt252>>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::array::Array::<core::felt252>>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "array2d_felt",
+        "inputs": [
+          {
+            "name": "test",
+            "type": "core::array::Array::<core::array::Array::<core::felt252>>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "tuple_echo",
+        "inputs": [
+          {
+            "name": "a",
+            "type": "(core::array::Array::<core::felt252>, core::array::Array::<core::felt252>)"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::array::Array::<core::felt252>, core::array::Array::<core::felt252>)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "array_bool_tuple",
+        "inputs": [
+          {
+            "name": "a",
+            "type": "core::array::Array::<core::felt252>"
+          },
+          {
+            "name": "b",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::array::Array::<core::felt252>, core::bool)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "array2ddd_felt",
+        "inputs": [
+          {
+            "name": "testdd",
+            "type": "core::array::Array::<core::array::Array::<core::felt252>>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "my_enum_output",
+        "inputs": [
+          {
+            "name": "val1",
+            "type": "core::integer::u16"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "hello2::hello2::MyEnum"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "option_u8_output",
+        "inputs": [
+          {
+            "name": "val1",
+            "type": "core::integer::u8"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::option::Option::<core::integer::u8>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "option_order_output",
+        "inputs": [
+          {
+            "name": "val1",
+            "type": "core::integer::u16"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::option::Option::<hello2::hello2::Order>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "option_order_input",
+        "inputs": [
+          {
+            "name": "inp",
+            "type": "core::option::Option::<hello2::hello2::Order>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u16"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "l1_handler",
+    "name": "increase_bal",
+    "inputs": [
+      {
+        "name": "from_address",
+        "type": "core::felt252"
+      },
+      {
+        "name": "amount",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": []
+  },
+  {
+    "type": "event",
+    "name": "hello2::hello2::HelloStarknet::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]
