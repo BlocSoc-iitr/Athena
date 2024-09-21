@@ -141,3 +141,121 @@ func TestEnumParsing(t *testing.T) {
 	assert.Equal(t, "account::escape::EscapeStatus", escapeStatus.Name)
 	assert.Equal(t, expectedVariants, escapeStatus.Variants)
 }
+
+func TestTupleParsing(t *testing.T) {
+	customTypes := make(map[string]interface{})
+
+	t.Run("Single Tuple", func(t *testing.T) {
+		singleTuple, err := ParseTuple("(core::felt252, core::bool)", customTypes)
+		assert.NoError(t, err)
+		assert.Equal(t, StarknetTuple{Members: []StarknetType{Felt, Bool}}, singleTuple)
+	})
+
+	t.Run("Nested Tuple 1", func(t *testing.T) {
+		nestedTuple1, err := ParseTuple("(core::felt252, (core::bool, core::integer::u256))", customTypes)
+		assert.NoError(t, err)
+		expected := StarknetTuple{Members: []StarknetType{
+			Felt,
+			StarknetTuple{Members: []StarknetType{Bool, U256}},
+		}}
+		assert.Equal(t, expected, nestedTuple1)
+	})
+
+	t.Run("Nested Tuple 2", func(t *testing.T) {
+		nestedTuple2, err := ParseTuple("(core::felt252, ((core::integer::u16, core::integer::u32), core::bool), core::integer::u256)", customTypes)
+		assert.NoError(t, err)
+		expected := StarknetTuple{Members: []StarknetType{
+			Felt,
+			StarknetTuple{Members: []StarknetType{
+				StarknetTuple{Members: []StarknetType{U16, U32}},
+				Bool,
+			}},
+			U256,
+		}}
+		assert.Equal(t, expected, nestedTuple2)
+	})
+}
+
+var UnorderedStructs = []map[string]interface{}{
+	{
+		"type": "struct",
+		"name": "betting::betting::Bet",
+		"members": []map[string]interface{}{
+			{"name": "expire_timestamp", "type": "core::integer::u64"},
+			{"name": "bettor", "type": "betting::betting::UserData"},
+			{"name": "counter_bettor", "type": "betting::betting::UserData"},
+			{"name": "amount", "type": "core::integer::u256"},
+		},
+	},
+	{
+		"type": "struct",
+		"name": "betting::betting::UserData",
+		"members": []map[string]interface{}{
+			{"name": "address", "type": "core::starknet::contract_address::ContractAddress"},
+			{"name": "total_assets", "type": "core::integer::u256"},
+		},
+	},
+	{
+		"type": "struct",
+		"name": "core::integer::u256",
+		"members": []map[string]interface{}{
+			{"name": "low", "type": "core::integer::u128"},
+			{"name": "high", "type": "core::integer::u128"},
+		},
+	},
+}
+
+func TestBuildTypeGraph(t *testing.T) {
+	typeGraph := BuildTypeGraph(UnorderedStructs)
+
+	expectedTypeGraph := map[string]map[string]bool{
+		"betting::betting::Bet": {
+			"betting::betting::UserData": true,
+			"core::integer::u256":        true,
+		},
+		"betting::betting::UserData": {
+			"core::integer::u256": true,
+		},
+		"core::integer::u256": {},
+	}
+
+	assert.Equal(t, expectedTypeGraph, typeGraph, "The type graph should match the expected result")
+
+	sortedDefs, err := TopoSortTypeDefs(UnorderedStructs)
+	assert.NoError(t, err, "TopoSortTypeDefs should not return an error")
+
+	expectedOrder := []string{
+		"core::integer::u256",
+		"betting::betting::UserData",
+		"betting::betting::Bet",
+	}
+
+	actualOrder := make([]string, len(sortedDefs))
+	for i, def := range sortedDefs {
+		actualOrder[i] = def["name"].(string)
+	}
+
+	assert.Equal(t, expectedOrder, actualOrder, "The sorted order should match the expected result")
+}
+
+func TestStructTopoSorting(t *testing.T) {
+	topoSortedTypeDefs, err := TopoSortTypeDefs(UnorderedStructs)
+	assert.NoError(t, err)
+
+	expectedOrder := []string{
+		"core::integer::u256",
+		"betting::betting::UserData",
+		"betting::betting::Bet",
+	}
+
+	assert.Equal(t, len(expectedOrder), len(topoSortedTypeDefs), "Number of sorted structs doesn't match expected")
+
+	for i, expectedName := range expectedOrder {
+		assert.Equal(t, expectedName, topoSortedTypeDefs[i]["name"], "Struct at index %d should be %s", i, expectedName)
+	}
+
+	// Verify the contents of each struct
+	assert.Equal(t, UnorderedStructs[2], topoSortedTypeDefs[0], "First struct should be core::integer::u256")
+	assert.Equal(t, UnorderedStructs[1], topoSortedTypeDefs[1], "Second struct should be betting::betting::UserData")
+	assert.Equal(t, UnorderedStructs[0], topoSortedTypeDefs[2], "Third struct should be betting::betting::Bet")
+}
