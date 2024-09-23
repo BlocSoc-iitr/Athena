@@ -1,5 +1,4 @@
 package athena_abi
-
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +24,6 @@ func TestParseIntTypes(t *testing.T) {
 		assert.Equal(t, tt.expectedType, res, "Expected %v, got %v", tt.expectedType, res)
 	}
 }
-
 // Test parsing address types
 func TestParseAddressTypes(t *testing.T) {
 	tests := []struct {
@@ -43,14 +41,12 @@ func TestParseAddressTypes(t *testing.T) {
 		assert.Equal(t, tt.expectedType, res, "Expected %v, got %v", tt.expectedType, res)
 	}
 }
-
 // Test parsing felt types
 func TestParseFelts(t *testing.T) {
 	res, err := parseType("core::felt252", nil)
 	assert.NoError(t, err, "parseType(core::felt252) failed with error")
 	assert.Equal(t, Felt, res, "Expected %v, got %v", Felt, res)
 }
-
 // Test parsing entry point felt types
 func TestParseEntryPointFelts(t *testing.T) {
 	tests := []struct {
@@ -67,14 +63,12 @@ func TestParseEntryPointFelts(t *testing.T) {
 		assert.Equal(t, tt.expectedType, res, "Expected %v, got %v", tt.expectedType, res)
 	}
 }
-
 // Test parsing boolean types
 func TestParseBool(t *testing.T) {
 	res, err := parseType("core::bool", nil)
 	assert.NoError(t, err, "parseType(core::bool) failed with error")
 	assert.Equal(t, Bool, res, "Expected %v, got %v", Bool, res)
 }
-
 // Test parsing array types
 func TestParseArray(t *testing.T) {
 	tests := []struct {
@@ -91,7 +85,6 @@ func TestParseArray(t *testing.T) {
 		assert.Equal(t, tt.expectedType, res, "Expected %v, got %v", tt.expectedType, res)
 	}
 }
-
 // Test parsing option types
 func TestParseOption(t *testing.T) {
 	tests := []struct {
@@ -108,7 +101,6 @@ func TestParseOption(t *testing.T) {
 		assert.Equal(t, tt.expectedType, res, "Expected %v, got %v", tt.expectedType, res)
 	}
 }
-
 // Test parsing legacy types
 func TestLegacyTypes(t *testing.T) {
 	res, err := parseType("(x: felt, y: felt)", nil)
@@ -116,7 +108,6 @@ func TestLegacyTypes(t *testing.T) {
 	expected := StarknetTuple{[]StarknetType{Felt, Felt}}
 	assert.Equal(t, expected, res, "Expected %v, got %v", expected, res)
 }
-
 // Test parsing storage address types
 func TestParseStorageAddress(t *testing.T) {
 	res, err := parseType("core::starknet::storage_access::StorageAddress", nil)
