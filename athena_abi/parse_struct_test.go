@@ -36,7 +36,6 @@ func loadAbi(abiName string, abiVersion int) ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode ABI JSON: %w", err)
 	}
-	//fmt.Println("Map contents:", abiJson)
 	return abiJson, nil
 }
 func init() {

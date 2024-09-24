@@ -3,7 +3,6 @@ package athena_abi
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,74 +86,15 @@ func TestLoadEthAbi(t *testing.T) {
 	assert.Equal(t, "starknet_eth", *ethDecoder.ABIName, "ABI name should match")
 }
 
-/*func TestLoadWildcardArraySyntax(t *testing.T) {
-    // Load the ABI
-    wildcardAbi, err := loadAbi("complex_array", 1)
-    assert.NoError(t, err, "Failed to load ABI")
-
-    // Convert the hex string to bytes
-    classHash, err := hex.DecodeString("0031da92cf5f54bcb81b447e219e2b791b23f3052d12b6c9abd04ff2e5626576")
-    assert.NoError(t, err, "Failed to decode hex string")
-
-    // Create the decoder using the from JSON function
-    decoder, err := StarknetAbiFromJSON(wildcardAbi, "complex_array", classHash)
-    assert.NoError(t, err, "Failed to create Starknet ABI from JSON")
-
-    // Add assertions to verify the properties of `decoder`
-    // Example assertions (adjust according to expected values):
-    assert.NotNil(t, decoder, "Decoder should not be nil")
-    //assert.Equal(t, expectedValue, decoder.SomeProperty, "Unexpected value for SomeProperty")
-}
-
-
-func TestLoadWildcardArraySyntax(t *testing.T) {
-    wildcardAbi,err := loadAbi("complex_array", 1)
-    assert.NoError(t, err, "Loading ABI should not return an error")
-    // Decode the hex string directly
-    decodedClassHash, err := hex.DecodeString("0031da92cf5f54bcb81b447e219e2b791b23f3052d12b6c9abd04ff2e5626576")
-    assert.NoError(t, err, "Failed to decode hex string")
-
-    decoder, err := StarknetAbiFromJSON(
-        wildcardAbi,
-        "complex_array",
-        decodedClassHash,
-    )
-    assert.NoError(t, err, "Failed to decode ABI")
-
-    parsedEvent := decoder.Events["log_storage_cells"]
-
-    // Assert the length of parsed event data
-    assert.Len(t, parsedEvent.data, 1, "Expected parsed event data length to be 1")
-
-    // Assert the storage_cells data matches the expected structure
-    assert.Equal(t, parsedEvent.data["storage_cells"], StarknetArray(
-        StarknetStruct{
-            Name: "StorageCell",
-            Members: []AbiParameter{
-                {Name: "key", Type: StarknetCoreType.Felt},
-                {Name: "value", Type: StarknetCoreType.Felt},
-            },
-        },
-    ), "Expected storage_cells data structure to match")
-
-    // Assert the event name
-    assert.Equal(t, parsedEvent.Name, "log_storage_cells", "Expected event name to be 'log_storage_cells'")
-}
-*/
-
 func TestLoadWildcardArraySyntax(t *testing.T) {
 	// Load the ABI (you'll need to implement this function)
 	wildcardAbi, err := loadAbi("complex_array", 1)
 	assert.NoError(t, err, "Loading ABI should not return an error")
 
 	classHash, _ := hex.DecodeString("0031da92cf5f54bcb81b447e219e2b791b23f3052d12b6c9abd04ff2e5626576")
-	//fmt.Println("wildcard",wildcardAbi)
 	decoder, err := StarknetAbiFromJSON(wildcardAbi, "complex_array", classHash)
 	assert.NoError(t, err, "there should not be error")
-	fmt.Println("decoder is ", decoder)
-	fmt.Println("the err is ", err)
 	parsedEvent, ok := decoder.Events["log_storage_cells"]
-	fmt.Println("parsedevent is ", parsedEvent)
 	assert.True(t, ok, "Event 'log_storage_cells' should exist")
 
 	assert.Equal(t, 1, len(parsedEvent.data), "Parsed event should have 1 data field")
@@ -170,7 +110,6 @@ func TestLoadWildcardArraySyntax(t *testing.T) {
 	assert.Equal(t, "StorageCell", structType.Name)
 
 	assert.Equal(t, 2, len(structType.Members), "StorageCell struct should have 2 members")
-	fmt.Println("hello hello the val is ", structType.Members)
 	assert.Equal(t, "key", structType.Members[0].Name)
 	assert.Equal(t, StarknetCoreType(Felt), structType.Members[0].Type)
 
@@ -262,15 +201,12 @@ func TestParseEventKeys(t *testing.T) {
 
 	// Decode the ABI using StarknetAbiFromJSON
 	parsedAbi, err := StarknetAbiFromJSON(abiJson, "erc20_key_events", classHash)
-	fmt.Println("parsedabi is helc  ", parsedAbi)
-	fmt.Println("the err is helc ", err)
 	assert.NoError(t, err, "Error parsing ABI for erc20_key_events")
 	assert.NotNil(t, parsedAbi, "Parsed ABI should not be nil for erc20_key_events")
 
 	// Access the "Approval" event from the parsed ABI
 	approveEvent, ok := parsedAbi.Events["Approval"]
 	assert.True(t, ok, "Approval event should be found in the parsed ABI")
-	fmt.Println("approve event ", approveEvent)
 	// Validate the event's parameters
 	expectedParameters := []string{"owner", "spender", "value"}
 	assert.Equal(t, expectedParameters, approveEvent.parameters, "Expected parameters do not match")

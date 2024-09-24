@@ -2,7 +2,6 @@ package athena_abi
 
 import (
 	"errors"
-	"fmt"
 	"log"
 )
 
@@ -35,11 +34,7 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 	groupedAbi := GroupAbiByType(abiJson)
 
 	// Parse defined types (structs and enums)
-	fmt.Println("hello")
-	fmt.Println("grouped abi", groupedAbi["type_def"])
 	definedTypes, err := ParseEnumsAndStructs(groupedAbi["type_def"])
-	fmt.Println("defined types Map contents:", definedTypes)
-	fmt.Println("is there error", err)
 	if err != nil {
 		sortedDefs, errDef := TopoSortTypeDefs(groupedAbi["type_def"])
 		if errDef == nil {
@@ -55,7 +50,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse interfaces
 	var definedInterfaces []AbiInterface
-	fmt.Println("now parsing interfaces")
 	for _, iface := range groupedAbi["interface"] {
 		functions := []AbiFunction{}
 		for _, funcData := range iface["items"].([]interface{}) {
@@ -73,7 +67,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse functions
 	functions := make(map[string]AbiFunction)
-	fmt.Println("now parsing functions")
 	for _, functionData := range groupedAbi["function"] {
 		funcName := functionData["name"].(string)
 		abiFunc, errParsingFunctions := ParseAbiFunction(functionData, definedTypes)
@@ -92,29 +85,20 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse events
 	parsedAbiEvents := []AbiEvent{}
-	fmt.Println("now parsing events")
-	fmt.Println("the grouped abi events is ", groupedAbi["event"])
 	for _, eventData := range groupedAbi["event"] {
-		fmt.Println("eventdata is ", eventData)
 		parsedEvent, errParsingEvent := ParseAbiEvent(eventData, definedTypes)
-		fmt.Println("parsed event is ", parsedEvent)
-		fmt.Println("the err is ", errParsingEvent)
 
 		if errParsingEvent != nil {
 			return nil, errParseEvents
 		}
-		//parsedAbiEvents = append(parsedAbiEvents, *parsedEvent)
 		if parsedEvent != nil {
 			parsedAbiEvents = append(parsedAbiEvents, *parsedEvent)
 		} else {
-			// Handle the nil case if necessary
-			//return nil, errors.New("parsed event is nil")
 			continue
 		}
 	}
 
 	events := make(map[string]AbiEvent)
-	fmt.Println("parsedabievents are ", parsedAbiEvents)
 	for _, event := range parsedAbiEvents {
 		if event.name != "" {
 			events[event.name] = event
@@ -123,7 +107,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse constructor
 	var constructor []AbiParameter
-	fmt.Println("now parsing constructor")
 	if len(groupedAbi["constructor"]) == 1 {
 		for _, paramData := range groupedAbi["constructor"][0]["inputs"].([]interface{}) {
 			param := paramData.(map[string]interface{})
@@ -142,7 +125,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse L1 handler
 	var l1Handler *AbiFunction
-	fmt.Println("now parsing l1handler")
 	if len(groupedAbi["l1_handler"]) == 1 {
 		handler, errorParsingFunction := ParseAbiFunction(groupedAbi["l1_handler"][0], definedTypes)
 		if errorParsingFunction != nil {
@@ -155,12 +137,7 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse implemented interfaces
 	implementedInterfaces := make(map[string]AbiInterface)
-	fmt.Println("now parsing implemented interfaces")
-	implArray, ok := groupedAbi["impl"]
-	if !ok {
-		//return nil, errParseImplementedInterfaces
-		//this if block is not required
-	}
+	implArray, _ := groupedAbi["impl"]
 	for _, implData := range implArray {
 		implMap := implData
 		if ifaceName, ok := implMap["interface_name"].(string); ok {
@@ -171,19 +148,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 			}
 		}
 	}
-	fmt.Println("abi name : ", abiName)
-	fmt.Println("classhash is  : ", classHash)
-	fmt.Println()
-	fmt.Println("functions is  : ", functions)
-	fmt.Println()
-	fmt.Println("events is  : ", events)
-	fmt.Println()
-	fmt.Println("constructor is  : ", constructor)
-	fmt.Println()
-	fmt.Println("l1handles is  ", l1Handler)
-	fmt.Println()
-	fmt.Println("implemented interfaces is  : ", implementedInterfaces)
-	fmt.Println()
 	// Return the populated StarknetAbi struct
 	return &StarknetABI{
 		ABIName:               &abiName,
