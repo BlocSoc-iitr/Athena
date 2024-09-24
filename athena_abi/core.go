@@ -93,6 +93,7 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 	// Parse events
 	parsedAbiEvents := []AbiEvent{}
 	fmt.Println("now parsing events")
+	fmt.Println("the grouped abi events is ", groupedAbi["event"])
 	for _, eventData := range groupedAbi["event"] {
 		fmt.Println("eventdata is ", eventData)
 		parsedEvent, errParsingEvent := ParseAbiEvent(eventData, definedTypes)

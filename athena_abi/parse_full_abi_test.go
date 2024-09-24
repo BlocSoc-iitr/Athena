@@ -2,6 +2,7 @@ package athena_abi
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -184,4 +185,109 @@ func TestLoadWildcardArraySyntax(t *testing.T) {
 
 	expectedStructIdStr := "{key:Felt,value:Felt}"
 	assert.Equal(t, expectedStructIdStr, structType.idStr(), "Struct idStr should match expected")
+}
+
+func TestWildcardSizeSyntax(t *testing.T) {
+	// felt* syntax length parameter can be calldata_len or calldata_size
+	abiFunction := map[string]interface{}{
+		"inputs": []interface{}{
+			map[string]interface{}{"name": "selector", "type": "felt"},
+			map[string]interface{}{"name": "calldata_size", "type": "felt"},
+			map[string]interface{}{"name": "calldata", "type": "felt*"},
+		},
+		"name": "__default__",
+		"outputs": []interface{}{
+			map[string]interface{}{"name": "retdata_size", "type": "felt"},
+			map[string]interface{}{"name": "retdata", "type": "felt*"},
+		},
+		"type": "function",
+	}
+
+	customTypes := make(map[string]interface{})
+	parsedAbiFunc, err := ParseAbiFunction(abiFunction, customTypes)
+
+	assert.NoError(t, err, "ParseAbiFunction should not return an error")
+	assert.NotNil(t, parsedAbiFunc, "ParseAbiFunction should return a non-nil result")
+
+	assert.Len(t, parsedAbiFunc.inputs, 2, "There should be 2 inputs")
+
+	assert.Equal(t, "selector", parsedAbiFunc.inputs[0].Name, "First input name should be 'selector'")
+	assert.Equal(t, Felt, parsedAbiFunc.inputs[0].Type, "First input type should be Felt")
+
+	assert.Equal(t, "calldata", parsedAbiFunc.inputs[1].Name, "Second input name should be 'calldata'")
+	assert.IsType(t, StarknetArray{}, parsedAbiFunc.inputs[1].Type, "Second input type should be StarknetArray")
+
+	calldataType, ok := parsedAbiFunc.inputs[1].Type.(StarknetArray)
+	assert.True(t, ok, "Second input type should be castable to StarknetArray")
+	assert.Equal(t, Felt, calldataType.InnerType, "Inner type of calldata should be Felt")
+}
+func TestNoStructDefinition(t *testing.T) {
+	// Assuming NO_STRUCT_ABI_DEFINITION is a JSON string
+	var abiJson []map[string]interface{}
+	err := json.Unmarshal([]byte(NO_STRUCT_ABI_DEFINITION), &abiJson) // Unmarshal JSON string into abiJson
+	assert.NoError(t, err, "Error unmarshalling ABI for no_struct")
+
+	classHash, err := hex.DecodeString(NO_STRUCT_CLASS_HASH[2:])
+	assert.NoError(t, err, "Error decoding class hash for no_struct")
+
+	// Decode ABI using StarknetAbiFromJSON
+	decoder, err := StarknetAbiFromJSON(abiJson, "no_struct", classHash)
+	assert.NoError(t, err, "Error decoding ABI for no_struct")
+	assert.NotNil(t, decoder, "Expected decoder to be non-nil for no_struct")
+}
+func TestFeltTypes(t *testing.T) {
+	// Assuming VERSION_0_ABI_DEFINITION is a JSON string
+	var abiJson []map[string]interface{}
+	err := json.Unmarshal([]byte(VERSION_0_ABI_DEFINITION), &abiJson) // Unmarshal JSON string into abiJson
+	assert.NoError(t, err, "Error unmarshalling ABI for felt_types")
+
+	classHash, err := hex.DecodeString(VERSION_0_CLASS_HASH[2:])
+	assert.NoError(t, err, "Error decoding class hash for felt_types")
+
+	// Decode ABI using StarknetAbiFromJSON
+	decoder, err := StarknetAbiFromJSON(abiJson, "felt_types", classHash)
+	assert.NoError(t, err, "Error decoding ABI for felt_types")
+	assert.NotNil(t, decoder, "Expected decoder to be non-nil for felt_types")
+}
+
+// Test for parsing event keys from the ERC20 ABI definition
+func TestParseEventKeys(t *testing.T) {
+	// Load the ABI for erc20_key_events with version 2
+	abiJson, err := loadAbi("erc20_key_events", 2)
+	assert.NoError(t, err, "Error loading ABI for erc20_key_events")
+
+	// Decode the class hash from a hex string
+	classHash, err := hex.DecodeString("0261ad90e1901833f794ee3d69816846f68ddb4fb7bb9ffec2d8f0c8608e298d")
+	assert.NoError(t, err, "Error decoding class hash for erc20_key_events")
+
+	// Decode the ABI using StarknetAbiFromJSON
+	parsedAbi, err := StarknetAbiFromJSON(abiJson, "erc20_key_events", classHash)
+	fmt.Println("parsedabi is helc  ", parsedAbi)
+	fmt.Println("the err is helc ", err)
+	assert.NoError(t, err, "Error parsing ABI for erc20_key_events")
+	assert.NotNil(t, parsedAbi, "Parsed ABI should not be nil for erc20_key_events")
+
+	// Access the "Approval" event from the parsed ABI
+	approveEvent, ok := parsedAbi.Events["Approval"]
+	assert.True(t, ok, "Approval event should be found in the parsed ABI")
+	fmt.Println("approve event ", approveEvent)
+	// Validate the event's parameters
+	expectedParameters := []string{"owner", "spender", "value"}
+	assert.Equal(t, expectedParameters, approveEvent.parameters, "Expected parameters do not match")
+
+	// Validate the event's keys
+	expectedKeys := map[string]StarknetType{ //confirm this change
+		"owner":   ContractAddress,
+		"spender": ContractAddress,
+	}
+	assert.Equal(t, expectedKeys, approveEvent.keys, "Expected keys do not match") //
+
+	// Validate the event's data
+	expectedData := map[string]StarknetType{ //confirm this change
+		"value": U256,
+	}
+	assert.Equal(t, expectedData, approveEvent.data, "Expected data do not match") //
+
+	// Validate the event's name
+	assert.Equal(t, "Approval", approveEvent.name, "Expected event name does not match")
 }
