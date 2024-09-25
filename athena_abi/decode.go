@@ -49,7 +49,7 @@ func DecodeCoreTypes(decodeType StarknetCoreType, callData *[]*big.Int) (interfa
 				Msg: fmt.Sprintf("not enough calldata to decode %s", decodeType.idStr()),
 			}
 		}
-		decodeTypeMaxVal, _ := decodeType.maxValue()
+		decodeTypeMaxVal, _ := StarknetCoreType(U128).maxValue()
 		if decodedLow.Cmp(big.NewInt(0)) < 0 || decodedLow.Cmp(decodeTypeMaxVal) > 0 {
 			return nil, fmt.Errorf("low Exceeds U128 range")
 		}
@@ -163,13 +163,15 @@ func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{},
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
 				}
 			}
+			var arrayItems []interface{}
 			for i := 0; i < int(arrayLen.Int64()); i++ {
 				decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
 				if err != nil {
 					return nil, err
 				}
-				outputData = append(outputData, decoded...)
+				arrayItems = append(arrayItems, decoded[0])
 			}
+			outputData = append(outputData, arrayItems)
 		case StarknetOption:
 			optionPresent, err := pop(callData)
 			if err != nil {
@@ -177,15 +179,22 @@ func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{},
 					Msg: fmt.Sprintf("not enough calldata to decode %s", starknet_type.idStr()),
 				}
 			}
-			if optionPresent.Cmp(big.NewInt(0)) == 0 {
+			if optionPresent.Cmp(big.NewInt(0)) == 1 {
 				outputData = append(outputData, nil)
 			} else {
 				decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
 				if err != nil {
 					return nil, err
 				}
-				outputData = append(outputData, decoded...)
+				outputData = append(outputData, decoded[0])
 			}
+		case StarknetStruct:
+			decodedStruct, err := DecodeFromParams(t.Members, callData)
+			if err != nil {
+				return nil, err
+			}
+			outputData = append(outputData, decodedStruct)
+
 		case StarknetEnum:
 			enumIndex, err := pop(callData)
 			if err != nil {
@@ -198,15 +207,17 @@ func DecodeFromTypes(types []StarknetType, callData *[]*big.Int) ([]interface{},
 			if err != nil {
 				return nil, err
 			}
-			outputData = append(outputData, map[string]interface{}{variantName: decoded})
+			outputData = append(outputData, map[string]interface{}{variantName: decoded[0]}) //change made
 		case StarknetTuple:
+			var tupleItems []interface{}
 			for _, tupleMembers := range t.Members {
 				decoded, err := DecodeFromTypes([]StarknetType{tupleMembers}, callData)
 				if err != nil {
 					return nil, err
 				}
-				outputData = append(outputData, decoded...)
+				tupleItems = append(tupleItems, decoded[0])
 			}
+			outputData = append(outputData, tupleItems)
 		case StarknetNonZero:
 			decoded, err := DecodeFromTypes([]StarknetType{t.InnerType}, callData)
 			if err != nil {

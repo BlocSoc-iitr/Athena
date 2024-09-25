@@ -128,7 +128,7 @@ func EncodeFromTypes(types []StarknetType, values []interface{}) ([]*big.Int, er
 			}
 			encoded, err := EncodeFromParams(t.Members, structValue)
 			if err != nil {
-				return nil, err
+				return nil, &TypeDecodeError{Msg: fmt.Sprintf("Failed to Encode %v to %T", encodeValue, encodeType)}
 			}
 			encodedCalldata = append(encodedCalldata, encoded...)
 
