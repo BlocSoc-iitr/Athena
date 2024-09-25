@@ -1,0 +1,135 @@
+[
+  {
+    "type": "function",
+    "name": "test",
+    "inputs": [
+      {
+        "name": "arg",
+        "type": "core::felt252"
+      },
+      {
+        "name": "arg1",
+        "type": "core::felt252"
+      },
+      {
+        "name": "arg2",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "test_contract::test_contract::MyType",
+    "members": [
+      {
+        "name": "a",
+        "type": "core::felt252"
+      },
+      {
+        "name": "b",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "another_function",
+    "inputs": [
+      {
+        "name": "x",
+        "type": "test_contract::test_contract::MyType"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "function",
+    "name": "call_foo",
+    "inputs": [
+      {
+        "name": "another_contract_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "a",
+        "type": "core::integer::u128"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::integer::u128"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "function",
+    "name": "libcall_foo",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "core::integer::u128"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::integer::u128"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "function",
+    "name": "segment_arena_builtin",
+    "inputs": [],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "l1_handler",
+    "name": "l1_handle",
+    "inputs": [
+      {
+        "name": "from_address",
+        "type": "core::felt252"
+      },
+      {
+        "name": "arg",
+        "type": "core::felt252"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "external"
+  },
+  {
+    "type": "event",
+    "name": "test_contract::test_contract::test_contract::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]

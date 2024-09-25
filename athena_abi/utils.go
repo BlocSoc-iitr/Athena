@@ -4,6 +4,11 @@ import (
 	"math/big"
 
 	"golang.org/x/crypto/sha3"
+
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 )
 
 func bigIntToBytes(value big.Int, length int) []byte {
@@ -77,4 +82,21 @@ func convertMap(input map[string]map[string]bool) map[string][]string {
 	}
 
 	return result
+}
+
+func loadABI(abiName string, abiVersion int) (map[string]interface{}, error) {
+	abiFilePath := filepath.Join("abis", fmt.Sprintf("v%d", abiVersion), abiName+".json")
+	abiFile, err := os.Open(abiFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open ABI file: %w", err)
+	}
+	defer abiFile.Close()
+
+	var abiData map[string]interface{}
+	decoder := json.NewDecoder(abiFile)
+	if err := decoder.Decode(&abiData); err != nil {
+		return nil, fmt.Errorf("failed to decode ABI JSON: %w", err)
+	}
+
+	return abiData, nil
 }

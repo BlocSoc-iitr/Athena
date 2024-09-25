@@ -87,10 +87,15 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 	parsedAbiEvents := []AbiEvent{}
 	for _, eventData := range groupedAbi["event"] {
 		parsedEvent, errParsingEvent := ParseAbiEvent(eventData, definedTypes)
+
 		if errParsingEvent != nil {
 			return nil, errParseEvents
 		}
-		parsedAbiEvents = append(parsedAbiEvents, *parsedEvent)
+		if parsedEvent != nil {
+			parsedAbiEvents = append(parsedAbiEvents, *parsedEvent)
+		} else {
+			continue
+		}
 	}
 
 	events := make(map[string]AbiEvent)
@@ -132,10 +137,7 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 
 	// Parse implemented interfaces
 	implementedInterfaces := make(map[string]AbiInterface)
-	implArray, ok := groupedAbi["impl"]
-	if !ok {
-		return nil, errParseImplementedInterfaces
-	}
+	implArray, _ := groupedAbi["impl"]
 	for _, implData := range implArray {
 		implMap := implData
 		if ifaceName, ok := implMap["interface_name"].(string); ok {
@@ -146,7 +148,6 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 			}
 		}
 	}
-
 	// Return the populated StarknetAbi struct
 	return &StarknetABI{
 		ABIName:               &abiName,

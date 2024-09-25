@@ -1,0 +1,124 @@
+[
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::integer::u256>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::integer::u8>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "core::integer::u8"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "test_option::test_option::OptionStruct",
+    "members": [
+      {
+        "name": "first_field",
+        "type": "core::felt252"
+      },
+      {
+        "name": "second_field",
+        "type": "core::option::Option::<core::integer::u256>"
+      },
+      {
+        "name": "third_field",
+        "type": "core::option::Option::<core::integer::u8>"
+      },
+      {
+        "name": "fourth_field",
+        "type": "core::felt252"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "receive_and_send_option_struct",
+    "inputs": [
+      {
+        "name": "option_struct",
+        "type": "test_option::test_option::OptionStruct"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "test_option::test_option::OptionStruct"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "get_option_struct",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "test_option::test_option::OptionStruct"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<()>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "()"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_empty_option",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "core::option::Option::<()>"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "test_option::test_option::HelloStarknet::Event",
+    "kind": "enum",
+    "variants": []
+  }
+]

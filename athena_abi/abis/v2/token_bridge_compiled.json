@@ -1,0 +1,208 @@
+[
+  {
+    "type": "function",
+    "name": "get_version",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "get_identity",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "core::felt252"
+      }
+    ],
+    "state_mutability": "view"
+  },
+  {
+    "type": "struct",
+    "name": "core::starknet::eth_address::EthAddress",
+    "members": [
+      {
+        "name": "address",
+        "type": "core::felt252"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "set_l1_bridge",
+    "inputs": [
+      {
+        "name": "l1_bridge_address",
+        "type": "core::starknet::eth_address::EthAddress"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "function",
+    "name": "set_l2_token",
+    "inputs": [
+      {
+        "name": "l2_token_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "initiate_withdraw",
+    "inputs": [
+      {
+        "name": "l1_recipient",
+        "type": "core::starknet::eth_address::EthAddress"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "governor_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "l1_handler",
+    "name": "handle_deposit",
+    "inputs": [
+      {
+        "name": "from_address",
+        "type": "core::felt252"
+      },
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "type": "event",
+    "name": "token_bridge::token_bridge::token_bridge::L1BridgeSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "l1_bridge_address",
+        "type": "core::starknet::eth_address::EthAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_bridge::token_bridge::token_bridge::L2TokenSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "l2_token_address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_bridge::token_bridge::token_bridge::WithdrawInitiated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "l1_recipient",
+        "type": "core::starknet::eth_address::EthAddress",
+        "kind": "data"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "caller_address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_bridge::token_bridge::token_bridge::DepositHandled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_bridge::token_bridge::token_bridge::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "L1BridgeSet",
+        "type": "token_bridge::token_bridge::token_bridge::L1BridgeSet",
+        "kind": "nested"
+      },
+      {
+        "name": "L2TokenSet",
+        "type": "token_bridge::token_bridge::token_bridge::L2TokenSet",
+        "kind": "nested"
+      },
+      {
+        "name": "WithdrawInitiated",
+        "type": "token_bridge::token_bridge::token_bridge::WithdrawInitiated",
+        "kind": "nested"
+      },
+      {
+        "name": "DepositHandled",
+        "type": "token_bridge::token_bridge::token_bridge::DepositHandled",
+        "kind": "nested"
+      }
+    ]
+  }
+]

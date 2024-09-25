@@ -10,11 +10,13 @@ func GroupAbiByType(abiJson []map[string]interface{}) map[AbiMemberType][]map[st
 	grouped := make(map[AbiMemberType][]map[string]interface{})
 
 	for _, entry := range abiJson {
-		if entry["type"] == "struct" || entry["type"] == "enum" {
+		typeStr, _ := entry["type"].(string)
+		if typeStr == "struct" || typeStr == "enum" {
 			grouped["type_def"] = append(grouped["type_def"], entry)
 		} else {
-			grouped[entry["type"].(AbiMemberType)] = append(grouped[entry["type"].(AbiMemberType)], entry)
+			grouped[AbiMemberType(typeStr)] = append(grouped[AbiMemberType(typeStr)], entry)
 		}
+
 	}
 	return grouped
 }
@@ -109,6 +111,10 @@ func TopoSortTypeDefs(typeDefs []map[string]interface{}) ([]map[string]interface
 		}
 		sortedTypeDefJson = append(sortedTypeDefJson, abiDefinition[0])
 	}
+	for i, j := 0, len(sortedTypeDefJson)-1; i < j; i, j = i+1, j-1 {
+		sortedTypeDefJson[i], sortedTypeDefJson[j] = sortedTypeDefJson[j], sortedTypeDefJson[i]
+	}
+
 	return sortedTypeDefJson, nil
 }
 
@@ -150,21 +156,35 @@ func ParseEnumsAndStructs(abiStructs []map[string]interface{}) (map[string]inter
 
 	return outputTypes, nil
 }
-
 func parseStruct(abiStruct map[string]interface{}, typeContext map[string]interface{}) (StarknetStruct, error) {
 	members := []AbiParameter{}
 
-	for _, member := range abiStruct["members"].([]map[string]interface{}) {
+	memberInterfaces, ok := abiStruct["members"].([]interface{})
+	if !ok {
+		return StarknetStruct{}, fmt.Errorf("invalid type for members: expected []interface{}")
+	}
+
+	for _, memberInterface := range memberInterfaces {
+		member, ok := memberInterface.(map[string]interface{})
+		if !ok {
+			return StarknetStruct{}, fmt.Errorf("invalid type for member: expected map[string]interface{}")
+		}
+
+		// Parse the member type
+
 		res, err := parseType(member["type"].(string), typeContext)
 		if err != nil {
 			return StarknetStruct{}, err
 		}
+
+		// Append the member to the list
 		members = append(members, AbiParameter{
 			Name: member["name"].(string),
 			Type: res,
 		})
 	}
 
+	// Return the parsed StarknetStruct
 	return StarknetStruct{
 		Name:    abiStruct["name"].(string),
 		Members: members,
@@ -177,7 +197,20 @@ func parseEnum(abiEnum map[string]interface{}, typeContext map[string]interface{
 		Type StarknetType
 	}{}
 
-	for _, variant := range abiEnum["variants"].([]map[string]interface{}) {
+	// Handle the case where `abiEnum["variants"]` is a `[]interface{}`
+	rawVariants, ok := abiEnum["variants"].([]interface{})
+	if !ok {
+		return StarknetEnum{}, fmt.Errorf("expected variants to be a slice of interface{}")
+	}
+
+	// Loop over the `rawVariants` and safely cast each to `map[string]interface{}`
+	for _, rawVariant := range rawVariants {
+		variant, ok := rawVariant.(map[string]interface{})
+		if !ok {
+			return StarknetEnum{}, fmt.Errorf("expected variant to be a map[string]interface{}")
+		}
+
+		// Parse the type of each variant
 		res, err := parseType(variant["type"].(string), typeContext)
 		if err != nil {
 			return StarknetEnum{}, err
@@ -209,8 +242,8 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 		}
 		return res, nil
 	}
-
 	parts := strings.Split(abiType, "::")[1:]
+
 	switch {
 	case len(parts) == 1 && parts[0] == "felt252":
 		return Felt, nil
@@ -226,7 +259,7 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 		return Bytes31, nil
 	case len(parts) == 3 && parts[0] == "starknet" && parts[1] == "storage_access" && parts[2] == "StorageAddress":
 		return StorageAddress, nil
-	case len(parts) >= 2 && parts[0] == "array" && parts[1] == "Array" || parts[1] == "Span":
+	case len(parts) >= 2 && (parts[0] == "array" && parts[1] == "Array" || parts[1] == "Span"):
 		res, err := parseType(extractInnerType(abiType), customTypes)
 		if err != nil {
 			return nil, err
@@ -244,26 +277,33 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 			return nil, err
 		}
 		return StarknetNonZero{res}, nil
+		//implemented integer parsing
+	case len(parts) >= 2 && parts[0] == "integer":
+		intType, err := intFromString(parts[1])
+		if err != nil {
+			return nil, err
+		}
+		return intType, nil
 	default:
+		abiType := strings.TrimSpace(abiType)
 		if val, exists := customTypes[abiType]; exists {
 			return val.(StarknetType), nil
-		}
-		if abiType == "felt" {
+		} else if abiType == "felt" {
 			return Felt, nil
-		}
-		if abiType == "Uint256" {
+		} else if abiType == "Uint256" {
 			return U256, nil
-		}
-		if strings.HasSuffix(abiType, "*") {
+		} else if strings.HasSuffix(abiType, "*") {
 			res, err := parseType(strings.TrimSuffix(abiType, "*"), customTypes)
 			if err != nil {
 				return nil, err
 			}
 			return StarknetArray{res}, nil
+		} else {
+			return nil, &InvalidAbiError{
+				Msg: "Invalid ABI type: " + abiType,
+			}
 		}
-		return nil, &InvalidAbiError{
-			Msg: "Invalid ABI type: " + abiType,
-		}
+
 	}
 }
 
@@ -284,20 +324,19 @@ func isNamedTuple(typeStr string) int {
 
 // customTypes is a map from string to StarknetStruct or StarknetEnum
 func ParseTuple(abiType string, customTypes map[string]interface{}) (StarknetTuple, error) {
-	strippedTuple := strings.TrimSpace(abiType[1 : len(abiType)-1])
+	trimmed := strings.TrimSpace(abiType)
+	strippedTuple := strings.TrimSpace(trimmed[1 : len(trimmed)-1])
 	outputTypes := []StarknetType{}
 	parenthesisCache := []string{}
 	typeCache := []string{}
 	for _, typeString := range strings.Split(strippedTuple, ",") {
 		tupleOpen := strings.Count(typeString, "(")
 		tupleClose := strings.Count(typeString, ")")
-
 		if tupleOpen > 0 {
 			for i := 0; i < tupleOpen; i++ {
 				parenthesisCache = append(parenthesisCache, "(")
 			}
 		}
-
 		if len(parenthesisCache) > 0 {
 			typeCache = append(typeCache, typeString)
 		} else {
@@ -315,7 +354,6 @@ func ParseTuple(abiType string, customTypes map[string]interface{}) (StarknetTup
 				outputTypes = append(outputTypes, res)
 			}
 		}
-
 		if tupleClose > 0 {
 			parenthesisCache = parenthesisCache[:len(parenthesisCache)-tupleClose]
 			if len(parenthesisCache) == 0 {
@@ -380,11 +418,13 @@ func ParseAbiTypes(types []string, customTypes map[string]interface{}) ([]Starkn
 func ParseAbiFunction(abiFunction map[string]interface{}, customTypes map[string]interface{}) (*AbiFunction, error) {
 	names := []string{}
 	types := []string{}
-	for _, abiInput := range abiFunction["inputs"].([]map[string]interface{}) {
-		names = append(names, abiInput["name"].(string))
+	for _, abiInput := range abiFunction["inputs"].([]interface{}) {
+		inputMap := abiInput.(map[string]interface{})
+		names = append(names, inputMap["name"].(string))
 	}
-	for _, abiInput := range abiFunction["inputs"].([]map[string]interface{}) {
-		types = append(types, abiInput["type"].(string))
+	for _, abiInput := range abiFunction["inputs"].([]interface{}) {
+		inputMap := abiInput.(map[string]interface{})
+		types = append(types, inputMap["type"].(string))
 	}
 	parsedInputs, err := parseAbiParameters(
 		names,
@@ -394,9 +434,9 @@ func ParseAbiFunction(abiFunction map[string]interface{}, customTypes map[string
 	if err != nil {
 		return nil, err
 	}
-
-	for _, abiOutput := range abiFunction["outputs"].([]map[string]interface{}) {
-		types = append(types, abiOutput["type"].(string))
+	for _, abiOutput := range abiFunction["outputs"].([]interface{}) {
+		outputMap := abiOutput.(map[string]interface{})
+		types = append(types, outputMap["type"].(string))
 	}
 
 	parsedOutputs, err := ParseAbiTypes(
@@ -418,7 +458,12 @@ func ParseAbiEvent(abiEvent map[string]interface{}, customTypes map[string]inter
 	eventParameters := []map[string]interface{}{}
 	if value, exists := abiEvent["kind"]; exists {
 		if value == "struct" {
-			eventParameters = abiEvent["members"].([]map[string]interface{})
+			eventMembers := abiEvent["members"].([]interface{})
+
+			for _, member := range eventMembers {
+				mem, _ := member.(map[string]interface{})
+				eventParameters = append(eventParameters, mem)
+			}
 		} else {
 			return nil, nil
 		}
@@ -430,33 +475,48 @@ func ParseAbiEvent(abiEvent map[string]interface{}, customTypes map[string]inter
 			}
 			eventParameters = append(eventParameters, eventParameter)
 		}
-	} else if data, ok := abiEvent["data"].([]map[string]interface{}); ok {
-		for _, e := range data {
+	} else if data, ok := abiEvent["data"].([]interface{}); ok {
+		var result []map[string]interface{}
+		for _, item := range data {
+			// Assert the type of item
+			if m, ok := item.(map[string]interface{}); ok {
+				result = append(result, m)
+			}
+		}
+		for _, e := range result {
 			eventParameter := map[string]interface{}{"kind": "data"}
 			for k, v := range e {
 				eventParameter[k] = v
 			}
 			eventParameters = append(eventParameters, eventParameter)
 		}
-		for _, e := range abiEvent["keys"].([]map[string]interface{}) {
-			eventParameter := map[string]interface{}{"kind": "key"}
-			for k, v := range e {
-				eventParameter[k] = v
+
+		if keys, ok := abiEvent["keys"].([]interface{}); ok {
+			var keyres []map[string]interface{}
+			for _, key := range keys {
+				if m, ok := key.(map[string]interface{}); ok {
+					keyres = append(keyres, m)
+				}
 			}
-			eventParameters = append(eventParameters, eventParameter)
+			for _, e := range keyres {
+				eventParameter := map[string]interface{}{"kind": "key"}
+				for k, v := range e {
+					eventParameter[k] = v
+				}
+				eventParameters = append(eventParameters, eventParameter)
+			}
 		}
+
 	} else {
 		return nil, nil
 	}
 
 	types := []string{}
 	names := []string{}
-
 	for _, eventParameter := range eventParameters {
 		types = append(types, eventParameter["type"].(string))
 		names = append(names, eventParameter["name"].(string))
 	}
-
 	decodedParams, err := parseAbiParameters(
 		names,
 		types,
