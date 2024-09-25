@@ -68,23 +68,29 @@ func NewDecodingDispatcher() *DecodingDispatcher {
 func (d *DecodingDispatcher) GetClass(classHash [32]byte) (*ClassDispatcher, bool) {
 	classID := classHash[24:]
 	var key [8]byte
+
 	copy(key[:], classID)
+
 	classDispatcher, exists := d.ClassIDs[key]
 	return &classDispatcher, exists
 }
 
 func (d *DecodingDispatcher) AddAbiFunctions(abi StarknetABI) map[[8]byte]FunctionDispatchInfo {
 	functionIDs := make(map[[8]byte]FunctionDispatchInfo)
+
 	for _, function := range abi.Functions {
 		functionTypeID := idHash(function.name)
+
 		if _, exists := d.FunctionTypes[functionTypeID]; !exists {
 			d.FunctionTypes[functionTypeID] = FunctionType{
 				InputParams:  function.inputs,
 				OutputParams: function.outputs,
 			}
 		}
+
 		var key [8]byte
 		copy(key[:], function.signature[24:])
+
 		functionIDs[key] = FunctionDispatchInfo{
 			DecoderReference: functionTypeID,
 			FunctionName:     function.name,
@@ -95,8 +101,10 @@ func (d *DecodingDispatcher) AddAbiFunctions(abi StarknetABI) map[[8]byte]Functi
 
 func (d *DecodingDispatcher) AddAbiEvents(abi StarknetABI) map[[8]byte]EventDispatchInfo {
 	eventIDs := make(map[[8]byte]EventDispatchInfo)
+
 	for _, event := range abi.Events {
 		eventTypeID := idHash(event.name)
+
 		if _, exists := d.EventTypes[eventTypeID]; !exists {
 			d.EventTypes[eventTypeID] = EventType{
 				Parameters: event.parameters,
@@ -104,8 +112,10 @@ func (d *DecodingDispatcher) AddAbiEvents(abi StarknetABI) map[[8]byte]EventDisp
 				Data:       event.data,
 			}
 		}
+
 		var key [8]byte
 		copy(key[:], event.signature[24:])
+
 		eventIDs[key] = EventDispatchInfo{
 			DecoderReference: eventTypeID,
 			EventName:        event.name,
@@ -117,7 +127,9 @@ func (d *DecodingDispatcher) AddAbiEvents(abi StarknetABI) map[[8]byte]EventDisp
 func (d *DecodingDispatcher) AddAbi(abi StarknetABI) {
 	classID := abi.ClassHash[24:]
 	var key [8]byte
+
 	copy(key[:], classID)
+
 	d.ClassIDs[key] = ClassDispatcher{
 		AbiName:     abi.ABIName,
 		ClassHash:   abi.ClassHash,
@@ -134,6 +146,7 @@ func (d *DecodingDispatcher) DecodeFunction(calldata *[]*big.Int, result *[]*big
 
 	functionID := functionSelector[24:]
 	var key [8]byte
+
 	copy(key[:], functionID)
 
 	functionDispatchInfo, exists := classDispatcher.FunctionIDs[key]
@@ -149,6 +162,7 @@ func (d *DecodingDispatcher) DecodeFunction(calldata *[]*big.Int, result *[]*big
 	if err != nil {
 		return nil, err
 	}
+
 	if len(*calldata) != 0 {
 		return nil, errors.New("calldata remaining after decoding inputs")
 	}
@@ -164,6 +178,7 @@ func (d *DecodingDispatcher) DecodeFunction(calldata *[]*big.Int, result *[]*big
 		if err != nil {
 			return nil, fmt.Errorf("calldata remaining after decoding function result %v from %v: %w", result, outputTypes, err)
 		}
+
 		decodedOutputs[0] = append(decodedOutputs[0].([]interface{}), decodedOutput[0])
 	}
 
@@ -199,7 +214,9 @@ func (d *DecodingDispatcher) DecodeEvent(data *[]*big.Int, keys *[]*big.Int, cla
 	// Convert keys[0] to 32 bytes for the event selector
 	eventSelector := make([]byte, 32)
 	var eventKey [8]uint8
+
 	copy(eventKey[:], eventSelector[len(eventSelector)-8:])
+
 	eventDispatcher := classDispatcher.EventIDs[eventKey]
 	eventParams := d.EventTypes[eventDispatcher.DecoderReference].Parameters
 	eventKeys := d.EventTypes[eventDispatcher.DecoderReference].Keys
