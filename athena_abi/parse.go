@@ -229,48 +229,93 @@ func parseEnum(abiEnum map[string]interface{}, typeContext map[string]interface{
 		Variants: variants,
 	}, nil
 }
-
 func parseType(abiType string, customTypes map[string]interface{}) (StarknetType, error) {
 	if abiType == "()" {
 		return NoneType, nil
 	}
 
 	if strings.HasPrefix(abiType, "(") {
+		// Check if it's a legacy tuple type (contains ":")
+		if strings.Contains(abiType, ":") {
+			// Handle legacy tuple type
+			fields := strings.Split(strings.Trim(abiType, "()"), ",")
+			members := make([]StarknetType, 0, len(fields))
+
+			for _, field := range fields {
+				parts := strings.Split(strings.TrimSpace(field), ":")
+				if len(parts) != 2 {
+					return nil, &InvalidAbiError{Msg: "Invalid legacy tuple format: " + field}
+				}
+				
+				fieldType, err := parseType(strings.TrimSpace(parts[1]), customTypes)
+				if err != nil {
+					return nil, err
+				}
+				members = append(members, fieldType)
+			}
+
+			return StarknetTuple{Members: members}, nil
+		}
+
+		// Handle regular tuple type
 		res, err := ParseTuple(abiType, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return res, nil
 	}
+
+	// Handle single "felt" type
+	if abiType == "felt" {
+		return Felt, nil
+	}
+
 	parts := strings.Split(abiType, "::")[1:]
 
 	switch {
-	case len(parts) == 1 && parts[0] == "felt252":
+	case len(parts) == 2 && parts[0] == "integer":
+		res, err := intFromString(parts[1])
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+
+	case len(parts) == 1 && (parts[0] == "felt252" || parts[0] == "felt"):
+		// Handle both "felt252" and "felt"
 		return Felt, nil
+
 	case len(parts) == 1 && parts[0] == "bool":
 		return Bool, nil
+
 	case len(parts) == 3 && parts[0] == "starknet" && parts[1] == "contract_address" && parts[2] == "ContractAddress":
 		return ContractAddress, nil
+
 	case len(parts) == 3 && parts[0] == "starknet" && parts[1] == "class_hash" && parts[2] == "ClassHash":
 		return ClassHash, nil
+
 	case len(parts) == 3 && parts[0] == "starknet" && parts[1] == "eth_address" && parts[2] == "EthAddress":
 		return EthAddress, nil
+
 	case len(parts) == 2 && parts[0] == "bytes_31" && parts[1] == "bytes31":
 		return Bytes31, nil
+
 	case len(parts) == 3 && parts[0] == "starknet" && parts[1] == "storage_access" && parts[2] == "StorageAddress":
 		return StorageAddress, nil
-	case len(parts) >= 2 && (parts[0] == "array" && parts[1] == "Array" || parts[1] == "Span"):
+
+	case len(parts) >= 2 && (parts[0] == "array" && (parts[1] == "Array" || parts[1] == "Span")):
 		res, err := parseType(extractInnerType(abiType), customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return StarknetArray{res}, nil
+
 	case len(parts) >= 2 && parts[0] == "option" && parts[1] == "Option":
 		res, err := parseType(extractInnerType(abiType), customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return StarknetOption{res}, nil
+
 	case len(parts) >= 2 && parts[0] == "zeroable" && parts[1] == "NonZero":
 		res, err := parseType(extractInnerType(abiType), customTypes)
 		if err != nil {
@@ -288,7 +333,8 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 		abiType := strings.TrimSpace(abiType)
 		if val, exists := customTypes[abiType]; exists {
 			return val.(StarknetType), nil
-		} else if abiType == "felt" {
+		}
+		if abiType == "felt252" || abiType == "felt" {
 			return Felt, nil
 		} else if abiType == "Uint256" {
 			return U256, nil
@@ -306,6 +352,7 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 
 	}
 }
+
 
 func isNamedTuple(typeStr string) int {
 	for i := 1; i < len(typeStr)-1; i++ {
