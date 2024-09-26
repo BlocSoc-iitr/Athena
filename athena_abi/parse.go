@@ -246,7 +246,7 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 				if len(parts) != 2 {
 					return nil, &InvalidAbiError{Msg: "Invalid legacy tuple format: " + field}
 				}
-				
+
 				fieldType, err := parseType(strings.TrimSpace(parts[1]), customTypes)
 				if err != nil {
 					return nil, err
@@ -352,7 +352,6 @@ func parseType(abiType string, customTypes map[string]interface{}) (StarknetType
 
 	}
 }
-
 
 func isNamedTuple(typeStr string) int {
 	for i := 1; i < len(typeStr)-1; i++ {
