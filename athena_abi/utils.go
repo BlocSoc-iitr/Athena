@@ -1,6 +1,7 @@
 package athena_abi
 
 import (
+	"io/fs"
 	"math/big"
 
 	"golang.org/x/crypto/sha3"
@@ -99,4 +100,55 @@ func loadABI(abiName string, abiVersion int) (map[string]interface{}, error) {
 	}
 
 	return abiData, nil
+}
+
+func GetAbisForVersion(abiVersion string) (map[string][]map[string]interface{}, error) {
+	abiDir := filepath.Join("abis", abiVersion)
+	abis := make(map[string][]map[string]interface{})
+
+	err := filepath.Walk(abiDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Check for JSON files only
+		if filepath.Ext(path) == ".json" {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			var rawData interface{}
+			if err := json.NewDecoder(file).Decode(&rawData); err != nil {
+				return err
+			}
+
+			// Check if rawData is of type []interface{}
+			abiList, ok := rawData.([]interface{})
+			if !ok {
+				return fmt.Errorf("expected ABI data to be []interface{}, got %T", rawData)
+			}
+
+			// Convert []interface{} to []map[string]interface{}
+			var abiData []map[string]interface{}
+			for _, item := range abiList {
+				abiMap, ok := item.(map[string]interface{})
+				if !ok {
+					return fmt.Errorf("expected item to be map[string]interface{}, got %T", item)
+				}
+				abiData = append(abiData, abiMap)
+			}
+
+			abis[info.Name()] = abiData
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load ABIs: %w", err)
+	}
+
+	return abis, nil
 }

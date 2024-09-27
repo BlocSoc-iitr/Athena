@@ -37,6 +37,7 @@ func StarknetAbiFromJSON(abiJson []map[string]interface{}, abiName string, class
 	definedTypes, err := ParseEnumsAndStructs(groupedAbi["type_def"])
 	if err != nil {
 		sortedDefs, errDef := TopoSortTypeDefs(groupedAbi["type_def"])
+
 		if errDef == nil {
 			defineTypes, errDtypes := ParseEnumsAndStructs(sortedDefs)
 			definedTypes = defineTypes
