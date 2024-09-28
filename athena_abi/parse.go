@@ -49,23 +49,44 @@ func extractInnerType(abiType string) string {
 	return abiType[start+1 : end]
 }
 
-// The function takes in a list of type definitions (dict) and returns a dict of sets (map[string]bool)
 func BuildTypeGraph(typeDefs []map[string]interface{}) map[string]map[string]bool {
 	outputGraph := make(map[string]map[string]bool)
+
 	for _, typeDef := range typeDefs {
 		referencedTypes := []string{}
+
+		// Check if the type is a struct
 		if typeDef["type"] == "struct" {
-			for _, member := range typeDef["members"].([]map[string]interface{}) {
-				referencedTypes = append(referencedTypes, member["type"].(string))
+			// Handle if "members" is []map[string]interface{}
+			if membersMap, ok := typeDef["members"].([]map[string]interface{}); ok {
+				for _, member := range membersMap {
+					referencedTypes = append(referencedTypes, member["type"].(string))
+				}
+			} else if members, ok := typeDef["members"].([]interface{}); ok {
+				// Handle if "members" is []interface{}
+				for _, member := range members {
+					if memberMap, ok := member.(map[string]interface{}); ok {
+						referencedTypes = append(referencedTypes, memberMap["type"].(string))
+					}
+				}
 			}
 		} else {
-			for _, variant := range typeDef["variants"].([]map[string]interface{}) {
-				referencedTypes = append(referencedTypes, variant["type"].(string))
+			// Handle variants
+			if variants, ok := typeDef["variants"].([]map[string]interface{}); ok {
+				for _, variant := range variants {
+					referencedTypes = append(referencedTypes, variant["type"].(string))
+				}
+			} else if variants, ok := typeDef["variants"].([]interface{}); ok {
+				for _, variant := range variants {
+					if variantMap, ok := variant.(map[string]interface{}); ok {
+						referencedTypes = append(referencedTypes, variantMap["type"].(string))
+					}
+				}
 			}
 		}
 
+		// Collect referenced types, excluding core types
 		refTypes := make(map[string]bool)
-
 		for _, typeStr := range referencedTypes {
 			if _, ok := StarknetCoreTypes[typeStr]; ok {
 				continue
@@ -80,7 +101,10 @@ func BuildTypeGraph(typeDefs []map[string]interface{}) map[string]map[string]boo
 			refTypes[typeStr] = true
 		}
 
-		outputGraph[typeDef["name"].(string)] = refTypes
+		// Safely assert the name of the type
+		if name, ok := typeDef["name"].(string); ok {
+			outputGraph[name] = refTypes
+		}
 	}
 
 	return outputGraph

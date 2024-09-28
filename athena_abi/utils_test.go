@@ -1,10 +1,11 @@
 package athena_abi
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/big"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBigIntToBytes(t *testing.T) {
