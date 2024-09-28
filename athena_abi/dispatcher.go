@@ -76,6 +76,7 @@ func (d *DecodingDispatcher) GetClass(classHash [32]byte) (*ClassDispatcher, boo
 }
 
 func (d *DecodingDispatcher) AddAbiFunctions(abi StarknetABI) map[[8]byte]FunctionDispatchInfo {
+
 	functionIDs := make(map[[8]byte]FunctionDispatchInfo)
 
 	for _, function := range abi.Functions {
@@ -86,6 +87,11 @@ func (d *DecodingDispatcher) AddAbiFunctions(abi StarknetABI) map[[8]byte]Functi
 				InputParams:  function.inputs,
 				OutputParams: function.outputs,
 			}
+
+		}
+
+		if len(function.signature) < 24 {
+			continue // Skip this function
 		}
 
 		var key [8]byte
@@ -113,6 +119,10 @@ func (d *DecodingDispatcher) AddAbiEvents(abi StarknetABI) map[[8]byte]EventDisp
 			}
 		}
 
+		if len(event.signature) < 24 {
+			continue // Skip this function
+		}
+
 		var key [8]byte
 		copy(key[:], event.signature[24:])
 
@@ -125,6 +135,11 @@ func (d *DecodingDispatcher) AddAbiEvents(abi StarknetABI) map[[8]byte]EventDisp
 }
 
 func (d *DecodingDispatcher) AddAbi(abi StarknetABI) {
+
+	if len(abi.ClassHash) < 32 {
+		fmt.Printf("ClassHash is too short: %d bytes", len(abi.ClassHash))
+		return
+	}
 	classID := abi.ClassHash[24:]
 	var key [8]byte
 
